@@ -158,6 +158,7 @@ class ArrayTable:
     def plot(self, _coly=1, _colx=0):
         import matplotlib.pyplot as plt
         plt.figure(1, figsize=(10, 5))
+
         if type(_coly) == int:
             plt.plot(self.table[_colx].data, self.table[_coly].data)
             plt.xlabel(self.table[_colx].ColName + "(" + self.table[_colx].ColUnit + ")")
@@ -169,10 +170,92 @@ class ArrayTable:
                 plt.legend()
                 plt.ylabel(self.table[_coly[0]].ColName + "(" + self.table[_coly[0]].ColUnit + ")")
         # plt.grid()
+        # plt.axhline(y=0,color='r',linestyle="-.")
+        # plt.axvline(x=0,color='g',linestyle=":")
+        plt.tight_layout()
         plt.show()
+        return plt
+
+    def scatter(self, _coly=1, _colx=0):
+        import matplotlib.pyplot as plt
+        plt.figure(1, figsize=(10, 5))
+
+        if type(_coly) == int:
+            plt.scatter(self.table[_colx].data, self.table[_coly].data, s=3)
+            plt.xlabel(self.table[_colx].ColName + "(" + self.table[_colx].ColUnit + ")")
+            plt.ylabel(self.table[_coly].ColName + "(" + self.table[_coly].ColUnit + ")")
+        elif type(_coly) == list:
+            for i in _coly:
+                plt.scatter(self.table[_colx].data, self.table[i].data, label=self.table[i].ColName)
+                plt.xlabel(self.table[_colx].ColName + "(" + self.table[_colx].ColUnit + ")")
+                plt.legend()
+                plt.ylabel(self.table[_coly[0]].ColName + "(" + self.table[_coly[0]].ColUnit + ")")
+        # plt.grid()
+        # plt.axhline(y=0,color='r',linestyle="-.")
+        # plt.axvline(x=0,color='g',linestyle=":")
+        plt.tight_layout()
+        plt.show()
+        return plt
+
+    def plotfun(self, fun, start=0, end=10, step=None):
+        from numpy import arange
+        if step is None:
+            step = (end - start) / 1e3
+        result = ArrayTable(2, 0)
+        for t in arange(start, end, step):
+            result.append([t, fun(t)])
+
+        return result
+
+    def compareResultPlot(self, ArrayList):
+        import matplotlib.pyplot as plt
+        plt.figure(1, figsize=(10, 5))
+
+        for i in range(1, self.col):
+            plt.plot(self.table[0].data, self.table[i].data, label=self.table[i].ColName)
+        plt.xlabel(self.table[0].ColName + "(" + self.table[0].ColUnit + ")")
+        plt.ylabel(self.table[1].ColName + "(" + self.table[1].ColUnit + ")")
+
+        for each in ArrayList:
+            for i in range(1, each.col):
+                plt.plot(each.table[0].data, each.table[i].data, label=each.table[i].ColName)
+
+        plt.legend()
+
+        plt.tight_layout()
+        plt.show()
+        return plt
 
     def animation(self, _coly=1, _colx=0):
-        pass
+        import numpy as np
+        import matplotlib.pyplot as plt
+        from matplotlib.animation import FuncAnimation
+        fig = plt.figure(0, figsize=(10, 10))
+        ax = fig.add_subplot(1, 1, 1)
+        # fig, ax = plt.subplots()
+        ln, = ax.plot([], [], 'b-', animated=False)
+        plt.xlabel(self.table[_colx].ColName + "(" + self.table[_colx].ColUnit + ")")
+        plt.ylabel(self.table[_coly].ColName + "(" + self.table[_coly].ColUnit + ")")
+        plt.tight_layout()
+
+        def init():
+            ax.set_xlim(0.8 * min(self.table[_colx].data), 1.05 * max(self.table[_colx].data))
+            ax.set_ylim(0.8 * min(self.table[_coly].data), 1.05 * max(self.table[_coly].data))
+            return ln,
+            # ax.set_xlim(0, 2 * np.pi)
+            # ax.set_ylim(-1, 1)
+            # return ln,
+
+        def update(i):
+            # ln.set_data(range(i),range(i))
+            ln.set_data(self.table[_colx].data[:i], self.table[_coly].data[:i])
+            # print(i)
+            return ln,
+
+        ani = FuncAnimation(fig, update, frames=np.arange(0, self.row), interval=0.00001,
+                            init_func=init, blit=True, repeat=False)
+        # ani.save("temp12.gif", writer="pillow",fps=30)
+        plt.show()
 
     def pie(self, _row):
         head, unit = self.getHeader()
@@ -199,9 +282,6 @@ class ArrayTable:
         plt.grid()
         plt.show()
 
-    def animation(self):
-        pass
-
     def findMaxValue(self, _col):
         return max(self.table[_col].data)
 
@@ -213,6 +293,18 @@ class ArrayTable:
 
     def findMinValueIndex(self, _col):
         return self.table[_col].data.index(self.findMinValue(_col))
+
+    def findMaximumDataIndex(self, col, order):
+        result = list()
+        for j in range(order, self.row - order):
+            flag = True
+            for i in range(j - order, j + order + 1):
+                if self.table[col].data[j] < self.table[col].data[i]:
+                    flag = False
+                    break
+            if flag:
+                result.append(j)
+        return result
 
     def getOneRecord(self, _row):
         if _row >= self.row:
@@ -248,6 +340,44 @@ class ArrayTable:
             f_csv.writerow(unit)
             f_csv.writerows(data)
 
+    def writeToSQLite(self, filename="temp.db", tablename="temptable"):
+        import sqlite3
+        conn = sqlite3.connect(filename)
+        cursor = conn.cursor()
+        cursor.execute("DROP TABLE IF EXISTS `%s`;" % tablename)
+        s = "CREATE TABLE `%s`(" % tablename
+        for i in range(self.col):
+            s += "`{}({})` FLOAT,".format(self.table[i].ColName, self.table[i].ColUnit)
+        s = s[:-1] + ");"
+        cursor.execute(s)
+        for i in range(self.row):
+            com = "INSERT INTO %s VALUES (" % tablename
+            for j in range(self.col):
+                com += "{},".format(self.table[j].data[i])
+            com = com[:-1] + ");"
+            cursor.execute(com)
+        conn.commit()
+        conn.close()
+
+    def appendToSQL(self, filename="temp.db", tablename="temptable"):
+        import sqlite3
+        conn = sqlite3.connect(filename)
+        cursor = conn.cursor()
+        # cursor.execute("DROP TABLE IF EXISTS `%s`;" % tablename)
+        # s = "CREATE TABLE `%s`(" % tablename
+        # for i in range(self.col):
+        #     s += "`{}({})` FLOAT,".format(self.table[i].ColName, self.table[i].ColUnit)
+        # s = s[:-1] + ");"
+        # cursor.execute(s)
+        for i in range(self.row):
+            com = "INSERT INTO %s VALUES (" % tablename
+            for j in range(self.col):
+                com += "{},".format(self.table[j].data[i])
+            com = com[:-1] + ");"
+            cursor.execute(com)
+        conn.commit()
+        conn.close()
+
     def setTableHeader(self, header):
         if len(header) != self.col:
             raise Exception("Header's size does not match the table size")
@@ -268,6 +398,22 @@ class ArrayTable:
             result += (self.table[_colx].data[i + 1] - self.table[_colx].data[i]) * (
                     self.table[_coly].data[i + 1] - self.table[_coly].data[i]) / 2.
         return result
+
+    def linearInterpolate(self, x, col, type=0):
+        left = 0
+        right = self.row - 1
+        while left != right - 1:
+            mid = (left + right) / 2
+            if self.table[0].data[mid] <= x:
+                left = mid
+            elif self.table[0].data[mid] >= x:
+                right = mid
+
+        x1 = self.table[0].data[left]
+        x2 = self.table[0].data[right]
+        y1 = self.table[col].data[left]
+        y2 = self.table[col].data[right]
+        return y1 * (x - x2) / (x1 - x2) + y2 * (x - x1) / (x2 - x1)
 
     def setUnitToSI(self):
         for i in range(self.col):
@@ -314,4 +460,3 @@ class ArrayTable:
         system("start temp.csv")
         system("pause")
         system("del /s /q temp.csv")
-

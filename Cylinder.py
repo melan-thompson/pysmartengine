@@ -357,12 +357,124 @@ class CylinderPressure:
         return result
 
     def PVDiagram(self, CylGeo):
-        import numpy as np
         from ArrayTable import ArrayTable
         result = ArrayTable(2, 0)
-        for i in self.data.row:
+        for i in range(self.data.row):
             result.append([CylGeo.V(self.data.table[0].data[i]), self.data.table[1].data[i]])
+        result.setTableHeader(["Cylinder volume", "Cylinder pressure"])
+        result.setTableUnit(["$m^3$", "bar"])
         return result
+
+    def Temperature(self, CylGeo):
+        from ArrayTable import ArrayTable
+        from GasProperty import Rg
+        result = ArrayTable(4, 0)
+        for i in range(self.data.row):
+            V = CylGeo.V(self.data.table[0].data[i])
+            T = self.data.table[1].data[i] * 1.e5 * V / Rg()
+            result.append(
+                [self.data.table[0].data[i],T,CylGeo.V(self.data.table[0].data[i]),self.data.table[1].data[i]])
+        result.setTableHeader(["Crank angle", "Cylinder temperature","Cylinder volume","Cylinder pressure"])
+        result.setTableUnit(["$^\circ CA$", "K","$m^3$","bar"])
+        return result
+
+    def startOfCombustion(self,type=0):
+        self.slice(-60, 60)
+        self.data.diff(1)
+        self.data.diff(2)
+        if type==0:
+            zeroindex=self.data.findMaxValueIndex(1)
+            while self.data.table[0].data[zeroindex]>0:
+                zeroindex-=1
+            while self.data.table[3].data[zeroindex]>0:
+                zeroindex-=1
+            fi0=self.data.table[0].data[zeroindex]
+            fi1=self.data.table[0].data[zeroindex+1]
+            p20=self.data.table[3].data[zeroindex]
+            p21=self.data.table[3].data[zeroindex+1]
+            soc=fi0-p20*(fi1-fi0)/(p21-p20)
+            print("Find start of combustion at {} CA".format(soc))
+            import matplotlib.pyplot as plt
+            fig,ax=plt.subplots(1, figsize=(10, 10))
+            ax.plot(self.data.table[0].data,self.data.table[3].data)
+            plt.xlabel(self.data.table[0].ColName + "(" + self.data.table[0].ColUnit + ")")
+            plt.ylabel(self.data.table[3].ColName + "(" + self.data.table[3].ColUnit + ")")
+            ax.axhline(y=0, color='r', linestyle="-.")
+            ax.axvline(x=0, color='g', linestyle=":")
+            ax.scatter(soc,0,color="r")
+            ax.annotate('Start of combustion %.3g $^\circ$CA'%soc,
+                        xy=(soc, 0), xycoords='data',
+                        xytext=(-170, 50), textcoords='offset points',
+                        arrowprops=dict(arrowstyle="->"))
+            plt.tight_layout()
+            plt.show()
+            return soc
+
+        if type==1:
+            index=self.data.findMaximumDataIndex(3,2)
+            trueindex=[i for i in index if self.data.table[0].data[i]<0]
+
+            print("Premixed combustion starts at {} CA".format(self.data.table[0].data[trueindex[-2]]))
+            print("Diffusion combustion starts at {} CA".format(self.data.table[0].data[trueindex[-1]]))
+
+            import matplotlib.pyplot as plt
+            fig, ax = plt.subplots(1, figsize=(10, 10))
+            ax.plot(self.data.table[0].data, self.data.table[3].data)
+            plt.xlabel(self.data.table[0].ColName + "(" + self.data.table[0].ColUnit + ")")
+            plt.ylabel(self.data.table[3].ColName + "(" + self.data.table[3].ColUnit + ")")
+            ax.axhline(y=0, color='r', linestyle="-.")
+            ax.axvline(x=0, color='g', linestyle=":")
+            ax.scatter(self.data.table[0].data[trueindex[-1]], self.data.table[3].data[trueindex[-1]], color="r")
+            ax.scatter(self.data.table[0].data[trueindex[-2]], self.data.table[3].data[trueindex[-2]], color="r")
+
+            ax.annotate('Start of combustion %.3g $^\circ$CA' % self.data.table[0].data[trueindex[-2]],
+                        xy=(self.data.table[0].data[trueindex[-2]], self.data.table[3].data[trueindex[-2]]),
+                        xycoords='data',
+                        xytext=(-200, 0), textcoords='offset points',
+                        arrowprops=dict(arrowstyle="->"))
+
+            ax.annotate('Start of combustion %.3g $^\circ$CA' % self.data.table[0].data[trueindex[-1]],
+                        xy=(self.data.table[0].data[trueindex[-1]], self.data.table[3].data[trueindex[-1]]),
+                        xycoords='data',
+                        xytext=(20, 50), textcoords='offset points',
+                        arrowprops=dict(arrowstyle="->"))
+
+            plt.tight_layout()
+            plt.show()
+            return trueindex[-2],trueindex[-1]
+
+        if type==2:
+            self.data.diff(3)
+            index = self.data.findMaximumDataIndex(4, 2)
+            trueindex = [i for i in index if self.data.table[0].data[i] < 0]
+
+            print("Premixed combustion starts at {} CA".format(self.data.table[0].data[trueindex[-2]]))
+            print("Diffusion combustion starts at {} CA".format(self.data.table[0].data[trueindex[-1]]))
+
+            import matplotlib.pyplot as plt
+            fig, ax = plt.subplots(1, figsize=(10, 10))
+            ax.plot(self.data.table[0].data, self.data.table[4].data)
+            plt.xlabel(self.data.table[0].ColName + "(" + self.data.table[0].ColUnit + ")")
+            plt.ylabel(self.data.table[4].ColName + "(" + self.data.table[4].ColUnit + ")")
+            ax.axhline(y=0, color='r', linestyle="-.")
+            ax.axvline(x=0, color='g', linestyle=":")
+            ax.scatter(self.data.table[0].data[trueindex[-1]], self.data.table[4].data[trueindex[-1]], color="r")
+            ax.scatter(self.data.table[0].data[trueindex[-2]], self.data.table[4].data[trueindex[-2]], color="r")
+
+            ax.annotate('Start of combustion %.3g $^\circ$CA' % self.data.table[0].data[trueindex[-2]],
+                        xy=(self.data.table[0].data[trueindex[-2]], self.data.table[4].data[trueindex[-2]]),
+                        xycoords='data',
+                        xytext=(-200, 0), textcoords='offset points',
+                        arrowprops=dict(arrowstyle="->"))
+            ax.annotate('Start of combustion %.3g $^\circ$CA' % self.data.table[0].data[trueindex[-1]],
+                        xy=(self.data.table[0].data[trueindex[-1]], self.data.table[4].data[trueindex[-1]]), xycoords='data',
+                        xytext=(20, 50), textcoords='offset points',
+                        arrowprops=dict(arrowstyle="->"))
+            plt.tight_layout()
+            plt.show()
+            return trueindex[-2], trueindex[-1]
+
+
 
     def slice(self, left=None, right=None):
         if left is None or left < self.data.table[0].data[0]:
@@ -376,6 +488,61 @@ class CylinderPressure:
 
         while self.data.table[0].data[0] < left:
             self.data.delRow(0)
+
+    def sliceToComAndExhaust(self, IVC=None, EVO=None):
+        maxPreIndex = self.data.findMaxValueIndex(1)
+        if IVC is None:
+            IVC = self.data.table[0].data[maxPreIndex] - 180. + 5.
+        if EVO is None:
+            EVO = self.data.table[0].data[maxPreIndex] + 180. - 5.
+        self.slice(IVC, EVO)
+
+    def ployTropicIndex(self, CylGeo):
+        from ArrayTable import ArrayTable
+        from math import log
+        result = ArrayTable(4, 0)
+        result.setTableHeader(["Crank angle", "poly tropic index", "V", "p"])
+        result.setTableUnit(["°CA", "/", "", ""])
+        for i in range(self.data.row - 1):
+            temp = log(self.data.table[1].data[i + 1] / self.data.table[1].data[i]) / log(
+                CylGeo.V(self.data.table[0].data[i]) / CylGeo.V(self.data.table[0].data[i + 1]))
+            result.append([self.data.table[0].data[i], temp,
+                           CylGeo.V(self.data.table[0].data[i]) / CylGeo.V(self.data.table[0].data[i + 1]),
+                           self.data.table[1].data[i + 1] / self.data.table[1].data[i]])
+
+        return result
+
+    def netHeatReleaseRate(self):
+        def gamma(T):
+            return 1.338 - 6.0e-5 * T + 1.0e-8 * T * T
+
+    def smooth(self,smoothType=None):
+        smoothTypelist=[None,"five points three times smooth","FFT smooth"]
+        if smoothType not in smoothTypelist:
+            print("Invalid smooth type!!")
+            print("allowed smooth type are: ")
+            print(smoothTypelist)
+            raise Exception("")
+        def fivePointsThreeTimesfun(data):
+            result=[0]*len(data)
+            i=0;result[i]=(69.*data[i]+4.*data[i+1]-6.*data[i+2]+4.*data[i+3]-data[i+4])/70.
+            i=1;result[i]=(2.*data[i-1]+27.*data[i]+12.*data[i+1]-8.*data[i+2]+2.*data[i+3])/35.
+            i=-2;result[i]=(2.*(data[i-3]+data[i+1])-8.*data[i-2]+12.*data[i-1]+27.*data[i])/35.
+            i=-1;result[i]=(-data[i-4]+4.*(data[i-3]+data[i-1])-6.*data[i-2]+69.*data[i])/70.
+            for i in range(2,len(data)-2):
+                result[i]=(-3.*(data[i-2]+data[i+2])+12.*(data[i-1]+data[i+1])+17.*data[i])/35.
+            return result
+
+        if smoothType=="five points three times smooth":
+            aftersmooth=fivePointsThreeTimesfun(self.data.table[1].data)
+            from ArrayTable import PhsicalVarList
+            aftersmoothcol=PhsicalVarList()
+            aftersmoothcol.ColName="Pressure after smooth"
+            aftersmoothcol.ColUnit=self.data.table[1].ColUnit
+            aftersmoothcol.data=aftersmooth
+            self.data.table.append(aftersmoothcol)
+            self.data.col+=1
+            return self.data
 
 
 from Compressor import *
@@ -408,13 +575,13 @@ class MillerCycle:
                             "BDC,but {} is given".format(IVC))
         from GasProperty import Rg
         from numpy import arange
-        for i in arange(0, 180 + IVC, 0.1):
+        for i in arange(0, 180 + IVC, 1):
             V = self.CylGeo.V(i)
             self.data.append([i, self.CylGeo.V(i), self.pk, self.Tk, self.pk * V / Rg(1.e8) / self.Tk])
 
     def adiabaticompress(self):
         from numpy import arange
-        for i in arange(self.IVC + 0.1, 360., 0.1):
+        for i in arange(self.IVC + 0.1, 360., 1):
             k = k_Justi(self.data.table[3].data[-1])
             V = self.CylGeo.V(i)
             p = pow(self.data.table[1].data[-1] / V, k) * self.data.table[2].data[-1]
@@ -505,7 +672,7 @@ class MillerCycle:
 
     def expansion(self):
         from numpy import arange
-        for i in arange(self.data.table[0].data[-1], 540., 0.1):
+        for i in arange(self.data.table[0].data[-1], 540., 1):
             k = k_Justi(self.data.table[3].data[-1])
             V = self.CylGeo.V(i)
             p = pow(self.data.table[1].data[-1] / V, k) * self.data.table[2].data[-1]
@@ -520,12 +687,13 @@ class MillerCycle:
         piTinit = 2.
 
         def fun(piTx):
-            return piTx-piT(self.pik,self.etak*etat,self.p0 * piTx / self.p6*self.T6,self.T0,self.alpha * self.L0)
+            return piTx - piT(self.pik, self.etak * etat, self.p0 * piTx / self.p6 * self.T6, self.T0,
+                              self.alpha * self.L0)
             # return piK(self.p0 * piT / self.p6 * self.T6, piT, etat, self.etak, self.T0,
             #            self.alpha * self.L0) - self.pik
 
         h = 0.01
-        while abs(fun(piTinit))>1.e-5:
+        while abs(fun(piTinit)) > 1.e-5:
             dfun = (fun(piTinit + h) - fun(piTinit - h)) / 2 / h
             piTinit -= fun(piTinit) / dfun
             print(piTinit)
@@ -538,14 +706,13 @@ class MillerCycle:
         self.T7 = self.p0 * piTinit / self.p6 * self.T6
         self.p7 = self.p0 * piTinit
         self.data.append(
-            [540.,self.CylGeo.V(540), self.p7, self.T7, self.p7 * self.CylGeo.V(540) / Rg(self.alpha) / self.T7])
+            [540., self.CylGeo.V(540), self.p7, self.T7, self.p7 * self.CylGeo.V(540) / Rg(self.alpha) / self.T7])
 
     def subcritical(self):
         from numpy import arange
-        for i in arange(540+0.1,720,0.1):
+        for i in arange(540 + 0.1, 720, 1):
             V = self.CylGeo.V(i)
             self.data.append([i, V, self.p7, self.T7, self.p7 * V / Rg(self.alpha) / self.T7])
-
 
 
 def FMEP(D, cm, pme) -> float:
