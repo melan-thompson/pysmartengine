@@ -1,0 +1,19 @@
+{
+    "Engine type":"发动机型号",
+    "Bore":"缸径",
+    "Stroke":"冲程",
+    "Connecting rod length":"连杆长度",
+    "Compression ratio":"压缩比",
+    "Number of cylinders":"气缸数",
+    "Production company":"生产公司",
+    "Engine usage":"用途",
+    "Using era":"应用年代",
+    "Stroke number":"冲程数",
+    "Cylinder arrangement":"气缸排列方式",
+    "Firing order":"发火顺序",
+    "Displacement volume":"发动机排量",
+    "Rated speed":"标定转速",
+    "Rated power":"标定功率",
+    "BMEP":"平均有效压力",
+    "BSFC":"燃油消耗率"
+}
