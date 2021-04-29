@@ -1,0 +1,11 @@
+# Default ignored files
+
+
+/shelf/
+/workspace.xml
+Data/
+Output/
+__pycache__/
+.idea/
+*.db
+*csv
