@@ -20,6 +20,33 @@ class PhsicalVarList:
         plt.grid()
         plt.show()
 
+    def findMaxValue(self):
+        return max(self.data)
+
+    def findMinValue(self):
+        return min(self.data)
+
+    def scaleToRange(self, r=[0, 1]):
+        minvalue = self.findMinValue()
+        maxvalue = self.findMaxValue()
+        result = [0] * len(self.data)
+        for i in range(len(self.data)):
+            result[i] = r[0] + (self.data[i] - minvalue) * (r[1] - r[0]) / (maxvalue - minvalue)
+        return result
+
+    def mean(self):
+        return sum(self.data) / len(self.data)
+
+    def Var(self):
+        meanvalue = self.mean()
+        temp = [(each - meanvalue) ** 2 for each in self.data]
+        return sum(temp) / (len(self.data) - 1)
+
+    def moveToCenter(self):
+        meanvalue = self.mean()
+        result = [self.data[i] - meanvalue for i in range(len(self.data))]
+        self.data = result
+
     def __mul__(self, num):
         self.data = [each * num for each in self.data]
 
@@ -64,7 +91,51 @@ class ArrayTable:
         for i in range(self.col): self.table[i].data = list()
         self.row = 0
 
-    def readCSVFile(self, _fileName, _tableName=None, _delimeter=','):
+    def Cov(self, i, j=None):
+        if j is None: j = i
+        import numpy as np
+        xi = np.array(self.table[i].data) - self.table[i].mean()
+        xj = np.array(self.table[j].data) - self.table[j].mean()
+        return 1. / (self.row - 1) * np.dot(xi.transpose(), xj)
+
+    def R(self,i,j=None):
+        from math import sqrt
+        if j is None: j=i
+        return self.Cov(i,j)/sqrt(self.Cov(i))/sqrt(self.Cov(j))
+
+    def readCSVFile(self, _fileName, headerstyle=0, _tableName=None, _delimeter=',', typename="double"):
+        import re
+
+        def searchNameAndUnitDeli(string, deli=","):
+            matchName = re.search(r'^.*?' + deli, string)
+            if matchName:
+                name = re.search(r'^.*?' + deli, string).group(0)[:-1]
+            else:
+                name = string.strip()
+
+            matchUnit = re.search(deli + r'.*$', string)
+            if matchUnit:
+                unit = re.search(deli + r'.*$', string).group(0)[1:]
+            else:
+                unit = "/"
+
+            return name, unit
+
+        def searchNameAndUnitSqure(string):
+            matchName = re.search(r'^.*?\(', string)
+            if matchName:
+                name = re.search(r'^.*?\(', string).group(0)[:-1]
+            else:
+                name = string.strip()
+
+            matchUnit = re.search(r'\(.*\)$', string)
+            if matchUnit:
+                unit = re.search(r'\(.*\)$', string).group(0)[1:-1]
+            else:
+                unit = "/"
+
+            return name, unit
+
         self.__init__()
         import csv
         with open(_fileName, 'r') as csvfile:
@@ -85,7 +156,7 @@ class ArrayTable:
             self.col = len(content[row])
 
             try:
-                while (content[row][0].strip() != ""): self.row += 1;row += 1
+                while content[row][0].strip() != "": self.row += 1;row += 1
             except:
                 pass
             self.row -= 2
@@ -93,10 +164,23 @@ class ArrayTable:
 
             for i in range(self.col):
                 row = rowlabel
-                coltoapp = PhsicalVarList(list(), content[row][i].strip(), content[row + 1][i].strip());
+                if headerstyle == 0:
+                    coltoapp = PhsicalVarList(list(), content[row][i].strip(), content[row + 1][i].strip());
+                elif headerstyle == 1:
+                    colname, colunit = searchNameAndUnitDeli(content[row][i].strip())
+                    coltoapp = PhsicalVarList(list(), colname, colunit);
+                elif headerstyle == 2:
+                    colname, colunit = searchNameAndUnitSqure(content[row][i].strip())
+                    coltoapp = PhsicalVarList(list(), colname, colunit)
+                else:
+                    raise Exception("Table name and unit delimiter error!!")
+
                 row += 2
                 for j in range(self.row):
-                    coltoapp.data.append(eval(content[row + j][i].strip()))
+                    if typename == "double":
+                        coltoapp.data.append(eval(content[row + j][i].strip()))
+                    elif typename == "string":
+                        coltoapp.data.append(content[row + j][i].strip(_delimeter))
                 self.table.append(coltoapp)
 
         else:
@@ -129,12 +213,21 @@ class ArrayTable:
                 self.table.append(coltoapp)
             self.setUnitToSI()
 
+    def readExcelFile(self,filename,sheetname,datatype="string",orient=0):
+        from pandas import read_excel
+        if orient==1:
+            read_excel("")
+
+
+
     def readSQLiteTable(self, databasename, tablename):
         import sqlite3
         conn = sqlite3.connect(databasename)
         cursor = conn.cursor()
         cursor.execute("PRAGMA table_info(%s)" % tablename)
         header = cursor.fetchall()
+        if len(header) == 0:
+            raise Exception("No table named {} is in the database {}".format(tablename, databasename))
         print("Table information")
         for row in header:
             print(row)
@@ -149,11 +242,84 @@ class ArrayTable:
         for i in range(len(name)):
             self.table.append(PhsicalVarList(list()))
         self.col = len(name)
-        self.setTableHeader(name)
+        import re
+        def searchNameAndUnitSqure(string):
+            matchName = re.search(r'^.*?\(', string)
+            if matchName:
+                name = re.search(r'^.*?\(', string).group(0)[:-1]
+            else:
+                name = string.strip()
+
+            matchUnit = re.search(r'\(.*\)$', string)
+            if matchUnit:
+                unit = re.search(r'\(.*\)$', string).group(0)[1:-1]
+            else:
+                unit = "/"
+
+            return name, unit
+
+        ColUnit = []
+        ColName = []
+
+        for each in name:
+            tempname, tempunit = searchNameAndUnitSqure(each)
+            ColName.append(tempname)
+            ColUnit.append(tempunit)
+        # ColUnit = [re.search(r'\(.*\)$', each).group(0)[1:-1] for each in name]
+        # ColName = [re.search(r'^.*\(', each).group(0)[:-1] for each in name]
+        self.setTableHeader(ColName)
+        self.setTableUnit(ColUnit)
+
+        def validvalue(li):
+            for each in li:
+                if str(each).strip() == "" or each is None:
+                    return False
+            return True
+
+        # for each in content:
+        #     if validvalue(each):
+        #         self.append(each)
 
         for each in content:
             self.append(each)
         conn.close()
+
+    def selectValidData(self, colist=[], isNumber=False):
+        def is_number(s):
+            try:
+                float(s)
+                return True
+            except ValueError:
+                pass
+            return False
+
+        def validvalue(li, isNumber=False):
+            if isNumber == False:
+                for each in li:
+                    if str(each).strip() == "" or (each is None):
+                        return False
+                return True
+            else:
+                for each in li:
+                    if str(each).strip() == "" or (each is None) or (not is_number(str(each).strip())):
+                        return False
+                return True
+
+        if len(colist) == 0:
+            colist = range(self.col)
+
+        result = ArrayTable(len(colist))
+        name, unit = self.getHeader()
+        result.setTableHeader([name[j] for j in colist])
+        result.setTableUnit([unit[j] for j in colist])
+
+        for i in range(self.row):
+            record = self.getOneRecord(i)
+            recordpart = [record[j] for j in colist]
+            if validvalue(recordpart, isNumber):
+                result.append(recordpart)
+
+        return result
 
     def plot(self, _coly=1, _colx=0):
         import matplotlib.pyplot as plt
@@ -176,12 +342,14 @@ class ArrayTable:
         plt.show()
         return plt
 
-    def scatter(self, _coly=1, _colx=0):
+    def scatter(self, _coly=1, _colx=0, hight=None):
         import matplotlib.pyplot as plt
         plt.figure(1, figsize=(10, 5))
 
         if type(_coly) == int:
             plt.scatter(self.table[_colx].data, self.table[_coly].data, s=3)
+            if hight is not None:
+                plt.scatter(self.table[_colx].data[hight], self.table[_coly].data[hight], s=6, marker="*", c="red")
             plt.xlabel(self.table[_colx].ColName + "(" + self.table[_colx].ColUnit + ")")
             plt.ylabel(self.table[_coly].ColName + "(" + self.table[_coly].ColUnit + ")")
         elif type(_coly) == list:
@@ -196,6 +364,49 @@ class ArrayTable:
         plt.tight_layout()
         plt.show()
         return plt
+
+    def colorScatter(self, _colx=0, _coly=1, _colz=2, hightlight=None):
+        import matplotlib.pyplot as plt
+        # from matplotlib import cm
+        plt.figure(1, figsize=(10, 5))
+
+        plt.scatter(self.table[_colx].data, self.table[_coly].data, s=self.table[_colz].scaleToRange([3, 100]),
+                    c='blue')
+        if hightlight is not None:
+            plt.scatter(self.table[_colx].data[hightlight], self.table[_coly].data[hightlight],
+                        s=max(self.table[_colz].scaleToRange([3, 100])),
+                        c='red', marker="*")
+        plt.xlabel(self.table[_colx].ColName + "(" + self.table[_colx].ColUnit + ")")
+        plt.ylabel(self.table[_coly].ColName + "(" + self.table[_coly].ColUnit + ")")
+        plt.tight_layout()
+        # plt.colorbar()
+        plt.show()
+
+    def scatter3D(self, colx=0, coly=1, colz=2):
+        import matplotlib.pyplot as plt
+        ax = plt.subplot(111, projection='3d')
+        for i in range(self.row):
+            ax.scatter(self.table[colx].data[i], self.table[coly].data[i], self.table[colz].data[i], c='b')
+        plt.tight_layout()
+        plt.show()
+
+    def interpolate2D(self, colx=0, coly=1, colz=2):
+        import numpy as np
+        from scipy import interpolate
+        x = np.linspace(self.findMinValue(colx) - 0.2 * abs(self.findMinValue(colx)),
+                        self.findMaxValue(colx) + 0.2 * abs(self.findMaxValue(colx)), 100)
+        y = np.linspace(self.findMinValue(coly) - 0.2 * abs(self.findMinValue(coly)),
+                        self.findMaxValue(coly) + 0.2 * abs(self.findMaxValue(coly)), 100)
+        # func=interpolate.interp2d(self.table[colx].data,self.table[coly].data,self.table[colz].data,kind="cubic")
+        func = interpolate.Rbf(self.table[colx].data, self.table[coly].data, self.table[colz].data, kind="multiquadric")
+        xx, yy = np.meshgrid(x, y)
+        zz = func(x, y)
+        import matplotlib.pyplot as plt
+        # from matplotlib import cm
+        fig = plt.figure(figsize=(8, 8))
+        plt.contourf(xx, yy, zz, 10, cmap="Blues")
+        plt.tight_layout()
+        plt.show()
 
     def plotfun(self, fun, start=0, end=10, step=None):
         from numpy import arange
@@ -378,6 +589,67 @@ class ArrayTable:
         conn.commit()
         conn.close()
 
+    def insertIntoSQLDB(self, databasename, tablename, primarykey=None):
+        import sqlite3
+        conn = sqlite3.connect(databasename)
+        cursor = conn.cursor()
+        cursor.execute("PRAGMA table_info(%s)" % tablename)
+        header = cursor.fetchall()
+        if len(header) == 0:
+            raise Exception("No table named {} is in the database {}".format(tablename, databasename))
+        print("Table information")
+        for row in header:
+            print(row)
+
+        databaseHeader = [each[1] for each in header]  # 读取名字
+
+        import re
+        def searchNameAndUnitSqure(string):
+            matchName = re.search(r'^.*?\(', string)
+            if matchName:
+                name = re.search(r'^.*?\(', string).group(0)[:-1]
+            else:
+                name = string.strip()
+
+            matchUnit = re.search(r'\(.*\)$', string)
+            if matchUnit:
+                unit = re.search(r'\(.*\)$', string).group(0)[1:-1]
+            else:
+                unit = "/"
+
+            return name, unit
+
+        DBColUnit = []
+        DBColName = []
+        for each in databaseHeader:
+            tempName, tempUnit = searchNameAndUnitSqure(each)
+            DBColName.append(tempName)
+            DBColUnit.append(tempUnit)
+
+        print(DBColName)
+        Name, Unit = self.getHeader()
+        print(Name)
+        existheaderIndex = []
+        for i in range(len(databaseHeader)):
+            if DBColName[i] in Name:
+                existheaderIndex.append(i)
+        existheaderIndexInTable = [Name.index(i) for i in [DBColName[j] for j in existheaderIndex]]
+
+        existheader = "(`" + "`,`".join([databaseHeader[i] for i in existheaderIndex]) + "`)"
+
+        print("Following columns are included the database:", existheader)
+
+        if primarykey is None:
+            for i in range(self.row):
+                command = "INSERT INTO " + tablename + existheader + "values" + "("
+                for j in existheaderIndexInTable:
+                    command += '"' + str(self.table[j].data[i]) + '",'
+                command = command[:-1] + ")"
+                cursor.execute(command)
+
+        conn.commit()
+        conn.close()
+
     def setTableHeader(self, header):
         if len(header) != self.col:
             raise Exception("Header's size does not match the table size")
@@ -420,6 +692,9 @@ class ArrayTable:
             if self.table[i].ColUnit.strip() == "mm":
                 self.table[i].ColUnit = "m"
                 self.table[i] * 1.e-3
+            if self.table[i].ColUnit.strip() == "MPa":
+                self.table[i].ColUnit = "bar"
+                self.table[i] * 1.e1
 
     def diff(self, _coly=1, _colx=0):
         temp = PhsicalVarList([0.] * self.row)
@@ -460,3 +735,27 @@ class ArrayTable:
         system("start temp.csv")
         system("pause")
         system("del /s /q temp.csv")
+
+    def translate(self, jsonfile="NameDic.json"):
+        def getKey(dic, value):
+            if value not in dic.values():
+                return None
+            else:
+                for i in dic.keys():
+                    if dic[i] == value: return i
+
+        def getKey2(dic, value):
+            for each in dic.values():
+                if value in each:
+                    return getKey(dic, each)
+            else:
+                return None
+
+        import json
+        with open(jsonfile, 'r+', encoding='utf-8') as f:
+            content = json.load(f)
+
+        for i in range(self.col):
+            key = getKey2(content, self.table[i].ColName)
+            if key is not None:
+                self.table[i].ColName = key

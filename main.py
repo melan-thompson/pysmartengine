@@ -13,8 +13,20 @@ from Compressor import *
 from ShockTube import *
 from GP import *
 from ODEsolver import *
+from FileManipulate import *
+from QPM import *
 # Press the green button in the gutter to run the script.
 if __name__ == '__main__':
+    from pandas import read_excel
+    data=read_excel("input.xlsx",header=None,sheet_name=0)
+    print(data[1])
+
+
+
+
+    # BSFCexample(2000).plot()
+    # TransposeCSVFile("ENGINEDATA.csv")
+
     # import sqlite3
     #
     # conn = sqlite3.connect("temp.db")
@@ -22,6 +34,30 @@ if __name__ == '__main__':
     # cursor.execute("INSERT INTO temptable VALUES (1,2,3,4,5),(5,6,89,12,45);")
     # conn.commit()
     # conn.close()
+    # table=ArrayTable()
+    # print(nozzle(1.e5))
+    # table.plotfun(threeTimes,-10,10).plot()
+    # table.plotfun(nozzle, 1.e5,1.e6).plot(0, 1)
+
+    # table.plotfun(openEnd2).plot()
+    # table.readCSVFile("机型数据库.csv",1,typename="string")
+    # table.translate()
+    # table.openWithProgram()
+    # table.insertIntoSQLDB("EngineDB.db","CylinderGeometry")
+    # table.openWithProgram()
+    # table.readSQLiteTable("EngineDB.db","EngineBasicPara")
+    # table.readSQLiteTable("EngineDB.db","CylinderGeometry")
+    # table.selectValidData(isNumber=False).openWithProgram()
+    # table.selectValidData([1,10,12,13]).selectValidData([0,1,2,3],isNumber=False).openWithProgram()
+    # table.openWithProgram()
+    # table.colorScatter(11,13,14)
+    # table.readCSVFile("统计值.csv")
+    # table.setUnitToSI()
+    # table.writeToSQLite("FuelConsumptionResult.db","FuelConsumption")
+
+    # table.colorScatter()
+    # table.interpolate2D()
+    # table.scatter(1)
 
     def fun(t,y):
         from math import exp
@@ -161,7 +197,7 @@ if __name__ == '__main__':
     #     temp.append([i,fun(i)])
     # temp.plot()
     #
-    laxWendroff1step(1.e-4,[1, 1200, 0.5e6], [0, 300, 0.1e6]).writeToSQLite()
+    # laxWendroff1step(1.e-4,[1, 1200, 0.5e6], [0, 300, 0.1e6]).writeToSQLite()
     #
     # a=Node()
     # a.init(u=1,p=5.e5,T=1200)

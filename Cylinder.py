@@ -1,3 +1,8 @@
+def DicplacementVolumn(Bore, Stroke, NumberOfCYlinders=1):
+    import math
+    return math.pi / 4. * pow(Bore, 2) * Stroke * NumberOfCYlinders
+
+
 class CylinderGeometry:
     def __init__(self, bore, stroke, connecting_rod_length=None, compression_ratio=None, number_of_cylinders=None):
         self.bore = bore
@@ -373,36 +378,36 @@ class CylinderPressure:
             V = CylGeo.V(self.data.table[0].data[i])
             T = self.data.table[1].data[i] * 1.e5 * V / Rg()
             result.append(
-                [self.data.table[0].data[i],T,CylGeo.V(self.data.table[0].data[i]),self.data.table[1].data[i]])
-        result.setTableHeader(["Crank angle", "Cylinder temperature","Cylinder volume","Cylinder pressure"])
-        result.setTableUnit(["$^\circ CA$", "K","$m^3$","bar"])
+                [self.data.table[0].data[i], T, CylGeo.V(self.data.table[0].data[i]), self.data.table[1].data[i]])
+        result.setTableHeader(["Crank angle", "Cylinder temperature", "Cylinder volume", "Cylinder pressure"])
+        result.setTableUnit(["$^\circ CA$", "K", "$m^3$", "bar"])
         return result
 
-    def startOfCombustion(self,type=0):
+    def startOfCombustion(self, type=0):
         self.slice(-60, 60)
         self.data.diff(1)
         self.data.diff(2)
-        if type==0:
-            zeroindex=self.data.findMaxValueIndex(1)
-            while self.data.table[0].data[zeroindex]>0:
-                zeroindex-=1
-            while self.data.table[3].data[zeroindex]>0:
-                zeroindex-=1
-            fi0=self.data.table[0].data[zeroindex]
-            fi1=self.data.table[0].data[zeroindex+1]
-            p20=self.data.table[3].data[zeroindex]
-            p21=self.data.table[3].data[zeroindex+1]
-            soc=fi0-p20*(fi1-fi0)/(p21-p20)
+        if type == 0:
+            zeroindex = self.data.findMaxValueIndex(1)
+            while self.data.table[0].data[zeroindex] > 0:
+                zeroindex -= 1
+            while self.data.table[3].data[zeroindex] > 0:
+                zeroindex -= 1
+            fi0 = self.data.table[0].data[zeroindex]
+            fi1 = self.data.table[0].data[zeroindex + 1]
+            p20 = self.data.table[3].data[zeroindex]
+            p21 = self.data.table[3].data[zeroindex + 1]
+            soc = fi0 - p20 * (fi1 - fi0) / (p21 - p20)
             print("Find start of combustion at {} CA".format(soc))
             import matplotlib.pyplot as plt
-            fig,ax=plt.subplots(1, figsize=(10, 10))
-            ax.plot(self.data.table[0].data,self.data.table[3].data)
+            fig, ax = plt.subplots(1, figsize=(10, 10))
+            ax.plot(self.data.table[0].data, self.data.table[3].data)
             plt.xlabel(self.data.table[0].ColName + "(" + self.data.table[0].ColUnit + ")")
             plt.ylabel(self.data.table[3].ColName + "(" + self.data.table[3].ColUnit + ")")
             ax.axhline(y=0, color='r', linestyle="-.")
             ax.axvline(x=0, color='g', linestyle=":")
-            ax.scatter(soc,0,color="r")
-            ax.annotate('Start of combustion %.3g $^\circ$CA'%soc,
+            ax.scatter(soc, 0, color="r")
+            ax.annotate('Start of combustion %.3g $^\circ$CA' % soc,
                         xy=(soc, 0), xycoords='data',
                         xytext=(-170, 50), textcoords='offset points',
                         arrowprops=dict(arrowstyle="->"))
@@ -410,9 +415,9 @@ class CylinderPressure:
             plt.show()
             return soc
 
-        if type==1:
-            index=self.data.findMaximumDataIndex(3,2)
-            trueindex=[i for i in index if self.data.table[0].data[i]<0]
+        if type == 1:
+            index = self.data.findMaximumDataIndex(3, 2)
+            trueindex = [i for i in index if self.data.table[0].data[i] < 0]
 
             print("Premixed combustion starts at {} CA".format(self.data.table[0].data[trueindex[-2]]))
             print("Diffusion combustion starts at {} CA".format(self.data.table[0].data[trueindex[-1]]))
@@ -441,9 +446,9 @@ class CylinderPressure:
 
             plt.tight_layout()
             plt.show()
-            return trueindex[-2],trueindex[-1]
+            return trueindex[-2], trueindex[-1]
 
-        if type==2:
+        if type == 2:
             self.data.diff(3)
             index = self.data.findMaximumDataIndex(4, 2)
             trueindex = [i for i in index if self.data.table[0].data[i] < 0]
@@ -467,14 +472,13 @@ class CylinderPressure:
                         xytext=(-200, 0), textcoords='offset points',
                         arrowprops=dict(arrowstyle="->"))
             ax.annotate('Start of combustion %.3g $^\circ$CA' % self.data.table[0].data[trueindex[-1]],
-                        xy=(self.data.table[0].data[trueindex[-1]], self.data.table[4].data[trueindex[-1]]), xycoords='data',
+                        xy=(self.data.table[0].data[trueindex[-1]], self.data.table[4].data[trueindex[-1]]),
+                        xycoords='data',
                         xytext=(20, 50), textcoords='offset points',
                         arrowprops=dict(arrowstyle="->"))
             plt.tight_layout()
             plt.show()
             return trueindex[-2], trueindex[-1]
-
-
 
     def slice(self, left=None, right=None):
         if left is None or left < self.data.table[0].data[0]:
@@ -516,32 +520,39 @@ class CylinderPressure:
         def gamma(T):
             return 1.338 - 6.0e-5 * T + 1.0e-8 * T * T
 
-    def smooth(self,smoothType=None):
-        smoothTypelist=[None,"five points three times smooth","FFT smooth"]
+    def smooth(self, smoothType=None):
+        smoothTypelist = [None, "five points three times smooth", "FFT smooth"]
         if smoothType not in smoothTypelist:
             print("Invalid smooth type!!")
             print("allowed smooth type are: ")
             print(smoothTypelist)
             raise Exception("")
+
         def fivePointsThreeTimesfun(data):
-            result=[0]*len(data)
-            i=0;result[i]=(69.*data[i]+4.*data[i+1]-6.*data[i+2]+4.*data[i+3]-data[i+4])/70.
-            i=1;result[i]=(2.*data[i-1]+27.*data[i]+12.*data[i+1]-8.*data[i+2]+2.*data[i+3])/35.
-            i=-2;result[i]=(2.*(data[i-3]+data[i+1])-8.*data[i-2]+12.*data[i-1]+27.*data[i])/35.
-            i=-1;result[i]=(-data[i-4]+4.*(data[i-3]+data[i-1])-6.*data[i-2]+69.*data[i])/70.
-            for i in range(2,len(data)-2):
-                result[i]=(-3.*(data[i-2]+data[i+2])+12.*(data[i-1]+data[i+1])+17.*data[i])/35.
+            result = [0] * len(data)
+            i = 0;
+            result[i] = (69. * data[i] + 4. * data[i + 1] - 6. * data[i + 2] + 4. * data[i + 3] - data[i + 4]) / 70.
+            i = 1;
+            result[i] = (2. * data[i - 1] + 27. * data[i] + 12. * data[i + 1] - 8. * data[i + 2] + 2. * data[
+                i + 3]) / 35.
+            i = -2;
+            result[i] = (2. * (data[i - 3] + data[i + 1]) - 8. * data[i - 2] + 12. * data[i - 1] + 27. * data[i]) / 35.
+            i = -1;
+            result[i] = (-data[i - 4] + 4. * (data[i - 3] + data[i - 1]) - 6. * data[i - 2] + 69. * data[i]) / 70.
+            for i in range(2, len(data) - 2):
+                result[i] = (-3. * (data[i - 2] + data[i + 2]) + 12. * (data[i - 1] + data[i + 1]) + 17. * data[
+                    i]) / 35.
             return result
 
-        if smoothType=="five points three times smooth":
-            aftersmooth=fivePointsThreeTimesfun(self.data.table[1].data)
+        if smoothType == "five points three times smooth":
+            aftersmooth = fivePointsThreeTimesfun(self.data.table[1].data)
             from ArrayTable import PhsicalVarList
-            aftersmoothcol=PhsicalVarList()
-            aftersmoothcol.ColName="Pressure after smooth"
-            aftersmoothcol.ColUnit=self.data.table[1].ColUnit
-            aftersmoothcol.data=aftersmooth
+            aftersmoothcol = PhsicalVarList()
+            aftersmoothcol.ColName = "Pressure after smooth"
+            aftersmoothcol.ColUnit = self.data.table[1].ColUnit
+            aftersmoothcol.data = aftersmooth
             self.data.table.append(aftersmoothcol)
-            self.data.col+=1
+            self.data.col += 1
             return self.data
 
 
@@ -742,7 +753,7 @@ def BMEP(n, Pe, TVH, stroke=4):
     """
     计算平均有效压力
     :param n: Speed,发动机转速(r/min)
-    :param Pe: Brake power 发动机功率(kW)
+    :param Pe: Brake power 发动机功率(W)
     :param TVH: Total displacement volume,发动机总排量(m^3)
     :param stroke: 发动机冲程
     :return: Brake mean effective pressure,平均有效压力(Pa)
@@ -762,6 +773,20 @@ def BSFC(etai, etam, Hu=42496e3):
     print("中速柴油机195~220g/(kW·h)")
     print("高速柴油机210~230g/(kW·h)")
     return 3.6e6 / (Hu / 1.e3 * etai * etam)
+
+
+def BSFCexample(n):
+    def fun(x):
+        return -827.92 * x ** 4 + 2163.5 * x ** 3 - 1835.2 * x ** 2 + 526.25 * x + 177.48
+
+    from ArrayTable import ArrayTable
+    result = ArrayTable(2, 0)
+    result.setTableHeader(["Speed","BSFC"])
+    result.setTableUnit(["rpm","g/(kW*h)"])
+    from numpy import arange
+    for i in arange(0.3, 1, 0.01):
+        result.append([n * i, fun(i)])
+    return result
 
 
 def mfcycle(ge, Pe, n, i=1):
