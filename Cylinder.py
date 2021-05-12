@@ -2,6 +2,12 @@ def DicplacementVolumn(Bore, Stroke, NumberOfCYlinders=1):
     import math
     return math.pi / 4. * pow(Bore, 2) * Stroke * NumberOfCYlinders
 
+def WibeFunction(theta,SOC,TCD,a=6.908,m=2):
+    from math import exp
+    if theta<SOC:return 0
+    else:
+        return 1-exp(-a*pow((theta-SOC)/TCD,m+1))
+
 
 class CylinderGeometry:
     def __init__(self, bore, stroke, connecting_rod_length=None, compression_ratio=None, number_of_cylinders=None):
@@ -233,6 +239,7 @@ class HeatReleaseData:
         print("Start of combustion:{}".format(self.SOC))
         self.EOC = self.__findEOC()
         print("End of combustion:{}".format(self.EOC))
+        self.__analysis()
         self.SOCIndex = self.data.table[0].data.index(self.SOC)
         self.EOCIndex = self.data.table[0].data.index(self.EOC)
 
@@ -255,6 +262,46 @@ class HeatReleaseData:
             print("Can not find end of combustion, will return the last element")
             return self.data.table[0].data[-1]
         return self.data.table[0].data[index]
+
+    def __analysis(self):
+        from ArrayTable import PhsicalVarList
+        burnedfraction = PhsicalVarList([], "Total burned fraction", "/")
+        self.CA10 = self.CA50 = self.CA90 = None
+        print("Maximum burned fraction is {}".format(self.data.integrate(1)))
+        index = 0
+
+        while True:
+            burnedfraction.data.append(self.data.integrate(1, index, 0))
+            index += 1
+            if index >= self.data.row:
+                print("Heat release data has some problem, can not find CA10,CA50,CA90")
+                return
+
+        self.CA10 = self.data.table[0].data[index]
+        print("Find CA10 at {} °CA".format(self.CA10))
+
+        while self.data.integrate(1, index, 0) < 0.5:
+            index += 1
+            if index >= self.data.row:
+                self.data.appendColumn(burnedfraction)
+                print("Heat release data has some problem, can not find CA50,CA90")
+                return
+        self.CA50 = self.data.table[0].data[index]
+        print("Find CA50 at {} °CA".format(self.CA50))
+
+        while self.data.integrate(1, index, 0) < 0.9:
+            index += 1
+            if index >= self.data.row:
+                print("Heat release data has some problem, can not find CA90")
+                return
+        self.CA90 = self.data.table[0].data[index]
+        print("Find CA90 at {} °CA".format(self.CA90))
+
+    def plot(self):
+        import matplotlib.pyplot as plt
+        fig1, ax1 = plt.subplots(211, figsize=(10, 10))
+
+        fig1, ax1 = plt.subplots(211, figsize=(10, 10))
 
     def regressWithSingleWiebe(self):
         from sko.PSO import PSO
@@ -726,6 +773,26 @@ class MillerCycle:
             self.data.append([i, V, self.p7, self.T7, self.p7 * V / Rg(self.alpha) / self.T7])
 
 
+def IdealMillerCylcle(T2=400, Rp=0.01, Hu=42700e3, alpha=1.1, L0=14.3, k=None, eps=18, epsm=15, pik=4, etaTK=0.5,p0=1.e5):
+    from GasProperty import cv_Justi, cp_Justi, k_Justi
+    if k is None:
+        k=k_Justi(T2)
+    cv = cv_Justi(T2)
+    lamda = Rp * Hu / (alpha * L0 * cv * pow(epsm, k - 1) * T2) + 1
+    cp = cp_Justi(T2)
+    rho = Hu * (1 - Rp) / (k * Hu * Rp + alpha * L0 * pow(epsm, k - 1) * cp * T2) + 1
+    pit = pow(1 - pow(eps / epsm, k - 1) * (pow(pik, (k - 1) / k) - 1) / lamda / pow(rho, k) / etaTK, -k / (k - 1))
+    eta = 1 - (lamda * pow(rho, k) / pow(eps, k - 1) + (k - 1) * eps / pow(epsm, k) - k / pow(epsm, k - 1) - (k - 1) * (
+                1 - pit / pik) * (eps - 1) / pow(epsm, k)) / (lamda - 1 + k * lamda * (rho - 1))
+    # BMEP=p0*pik*(((lamda-1)+k*lamda*(rho-1))
+    return eta
+
+
+def x(theta, start=0, end=60):
+    from math import cos, pi
+    return 0.5 * (1 - cos(pi * (theta - start) / (end - start)))
+
+
 def FMEP(D, cm, pme) -> float:
     """
     计算平均机械损失压力，适用于四冲程
@@ -781,8 +848,8 @@ def BSFCexample(n):
 
     from ArrayTable import ArrayTable
     result = ArrayTable(2, 0)
-    result.setTableHeader(["Speed","BSFC"])
-    result.setTableUnit(["rpm","g/(kW*h)"])
+    result.setTableHeader(["Speed", "BSFC"])
+    result.setTableUnit(["rpm", "g/(kW*h)"])
     from numpy import arange
     for i in arange(0.3, 1, 0.01):
         result.append([n * i, fun(i)])
@@ -802,6 +869,12 @@ def mfcycle(ge, Pe, n, i=1):
     print("fuel mass injected per cylinder per cycle:{}mg".format(result * 1.e6))
     return result
 
+def mfcylclePim(VE):
+    pass
+
+def massAir(Vd,ps=1.e5,Ts=300,VE=1.0):
+    from GasProperty import Rg
+    return VE*ps*Vd/Rg()/Ts
 
 def thermalUsageIndex(gi, alpha, Cm, D, S, n, Ps, Ts):
     """
@@ -819,3 +892,7 @@ def thermalUsageIndex(gi, alpha, Cm, D, S, n, Ps, Ts):
     R = pow(alpha * gi / 1e3, 0.5) * pow(Ts, 1.5) * pow(Cm, 0.78) * (0.5 + D / (2 * S)) / (
             (D * n) * pow(D * Ps / 1.e6, 0.22))
     return 1.028 - 0.00096 * R
+
+
+def simpleWoschini():
+    pass

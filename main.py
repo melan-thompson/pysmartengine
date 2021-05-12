@@ -3,6 +3,14 @@
 # Press Shift+F10 to execute it or replace it with your code.
 # Press Double Shift to search everywhere for classes, files, tool windows, actions, and settings.
 
+import sys
+sys.path.append("./Properties of working fluids/")
+sys.path.append("./Data/")
+sys.path.append("./Pipe/")
+sys.path.append("./Algorithm/")
+sys.path.append("./Mean value engine models/")
+from ArrayTable import *
+
 def print_hi(name):
     # Use a breakpoint in the code line below to debug your script.
     print(f'Hi, {name}')  # Press Ctrl+F8 to toggle the breakpoint.
@@ -10,19 +18,44 @@ def print_hi(name):
 from Cylinder import *
 #from GasProperty import *
 from Compressor import *
-from ShockTube import *
-from GP import *
-from ODEsolver import *
+
 from FileManipulate import *
-from QPM import *
+from Pipe import QPM
+from Algorithm import GP
+from MEEM import *
+from Valve import *
+
 # Press the green button in the gutter to run the script.
 if __name__ == '__main__':
+    # T=ArrayTable(1,0)
+    # T.append([6])
+    # T.append([1])
+    # T.append([2])
+    # T.append([7])
+    # T.append([9])
+    # T.append([3])
+    # T.append([4])
+    # T.append([5])
+    # T.append([10])
+    # T.append([8])
+    # T.doQuickSort(0)
+    # T.openWithProgram()
+
+    # C=ValveDesign(TDC=0)
+    # C.plot()
+    # from numpy import linspace
+    # def divideCV(start=0,end=10,numberofCV=10):
+    #     from numpy import linspace
+    #     boundary=linspace(start,end,numberofCV+1)
+    #     centerofCV=[(boundary[i]+boundary[i+1])/2. for i in range(len(boundary)-1)]
+    #     return centerofCV,boundary
+    #
+    # node,B=divideCV(0,10,10)
+    # print(node)
+    # print(B)
     from pandas import read_excel
-    data=read_excel("input.xlsx",header=None,sheet_name=0)
-    print(data[1])
-
-
-
+    # data=read_excel("input.xlsx",header=None,sheet_name=0)
+    # print(data[1])
 
     # BSFCexample(2000).plot()
     # TransposeCSVFile("ENGINEDATA.csv")
@@ -34,11 +67,31 @@ if __name__ == '__main__':
     # cursor.execute("INSERT INTO temptable VALUES (1,2,3,4,5),(5,6,89,12,45);")
     # conn.commit()
     # conn.close()
-    # table=ArrayTable()
+    # table=ArrayTable(2,0)
+    # from numpy import arange
+    # for i in arange(0.5,10.1):
+    #     table.append([i,IdealMillerCylcle(Rp=0.06,alpha=2,eps=16,epsm=14,etaTK=0.5,pik=i,T2=350)])
+    # table.plot()
     # print(nozzle(1.e5))
-    # table.plotfun(threeTimes,-10,10).plot()
+    # table.plotfun(x,-120,60).plot()
     # table.plotfun(nozzle, 1.e5,1.e6).plot(0, 1)
 
+    C = CylinderGeometry(100e-3, 100e-3, 152e-3, 18)
+    print(massAir(C.displacedVolume(),2.7649e5,318))
+    I=IdealCylcle(C)
+    I.compress(-110,xr=0.07,Tim=318,Tr=1000,pim=2.7649e5)
+    # I.CompressData.plot(2)
+    I.Burn(Rp=0.01,alpha=1.7,SOC=1.5)
+    I.Expense()
+    I.pressureReconstruct()
+    I.gasExchange(pem=3.33e5)
+    I.analyze()
+    I.plot()
+    # I.Rpressure.plot()
+    # I.ExpanseData.plot(2)
+    # I.ExpanseData.compareResultPlot([I.CompressData,I.GasExchange])
+    # I.GasExchange.compareResultPlot([I.CompressData])
+    # I.CompressData.plot(2)
     # table.plotfun(openEnd2).plot()
     # table.readCSVFile("机型数据库.csv",1,typename="string")
     # table.translate()

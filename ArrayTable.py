@@ -1,3 +1,5 @@
+import sys
+sys.setrecursionlimit(100000)
 class PhsicalVarList:
     def __init__(self, data=list(), ColName="EmptyName", ColUnit="EmptyUnit"):
         self.ColName = ColName
@@ -98,10 +100,10 @@ class ArrayTable:
         xj = np.array(self.table[j].data) - self.table[j].mean()
         return 1. / (self.row - 1) * np.dot(xi.transpose(), xj)
 
-    def R(self,i,j=None):
+    def R(self, i, j=None):
         from math import sqrt
-        if j is None: j=i
-        return self.Cov(i,j)/sqrt(self.Cov(i))/sqrt(self.Cov(j))
+        if j is None: j = i
+        return self.Cov(i, j) / sqrt(self.Cov(i)) / sqrt(self.Cov(j))
 
     def readCSVFile(self, _fileName, headerstyle=0, _tableName=None, _delimeter=',', typename="double"):
         import re
@@ -213,12 +215,10 @@ class ArrayTable:
                 self.table.append(coltoapp)
             self.setUnitToSI()
 
-    def readExcelFile(self,filename,sheetname,datatype="string",orient=0):
+    def readExcelFile(self, filename, sheetname, datatype="string", orient=0):
         from pandas import read_excel
-        if orient==1:
+        if orient == 1:
             read_excel("")
-
-
 
     def readSQLiteTable(self, databasename, tablename):
         import sqlite3
@@ -664,18 +664,22 @@ class ArrayTable:
             for i in range(self.col):
                 self.table[i].ColUnit = unitHeader[i]
 
-    def integral(self, _coly, _colx=0) -> float:
+    def integrate(self, _coly, end_row=None, start_row=0, _colx=0) -> float:
+        if end_row is None: end_row = self.row - 1
+        if end_row > self.row - 1:
+            raise Exception(
+                "can not integrate to row {} because this table only has {} rows".format(end_row, self.row - 1))
         result = 0.
-        for i in range(self.row - 1):
+        for i in range(start_row, end_row):
             result += (self.table[_colx].data[i + 1] - self.table[_colx].data[i]) * (
-                    self.table[_coly].data[i + 1] - self.table[_coly].data[i]) / 2.
+                    self.table[_coly].data[i + 1] + self.table[_coly].data[i]) / 2.
         return result
 
     def linearInterpolate(self, x, col, type=0):
         left = 0
         right = self.row - 1
         while left != right - 1:
-            mid = (left + right) / 2
+            mid = (left + right) // 2
             if self.table[0].data[mid] <= x:
                 left = mid
             elif self.table[0].data[mid] >= x:
@@ -759,3 +763,38 @@ class ArrayTable:
             key = getKey2(content, self.table[i].ColName)
             if key is not None:
                 self.table[i].ColName = key
+
+    def exchangeRow(self, i, j):
+        temp = self.getOneRecord(i)
+        for k in range(len(temp)):
+            self.table[k].data[i] = self.table[k].data[j]
+
+        for k in range(len(temp)):
+            self.table[k].data[j] = temp[k]
+
+    def doQuickSort(self, col=0):
+
+        self.__quickSort(0, self.row - 1, col)
+
+    def __quickSort(self, left, right, col):
+        if left>=right:return
+        i = left
+        j = right
+        base = self.getOneRecord(left)
+
+        while i < j:
+            while self.table[col].data[j] >= base[col] and i < j:
+                j -= 1
+            while self.table[col].data[i] <= base[col] and i < j:
+                i += 1
+            if i < j:
+                self.exchangeRow(i, j)
+
+        for k in range(len(base)):
+            self.table[k].data[left] = self.table[k].data[i]
+
+        for k in range(len(base)):
+            self.table[k].data[i] = base[k]
+
+        self.__quickSort(left, i - 1, col)
+        self.__quickSort(i + 1, right, col)

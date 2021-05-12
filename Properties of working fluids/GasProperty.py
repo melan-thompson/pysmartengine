@@ -156,6 +156,9 @@ class DieselMixture:
         self.xr = ma * r / (1 - r) / (1 + self.L0) / self.gf
         self.__initPropertyTable()
 
+    def init_With_Mc_r(self,mc,r,gf):
+        self.init_With_Ma_r((1-r)*mc,r,gf)
+
     def init_With_Mc_AFA(self, mc, afa, gf):
         self.gf = gf
         if afa < 1:

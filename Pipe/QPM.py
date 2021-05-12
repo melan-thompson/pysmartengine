@@ -1,3 +1,5 @@
+import sys
+sys.path.append("..")
 def openEnd(p, p0=1.e5, T0=300, R=None, k=None):
     from GasProperty import k_Justi, Rg
     from math import sqrt
