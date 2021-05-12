@@ -1,5 +1,5 @@
-本项目为内燃机性能仿真常用代码，使用python编写的目的是能够使用最新的算法和框架。
-后期将使用pytorch框架一维非定常流动以及缸内CFD计算模块，因为pytorch能够用GPU加速矩阵的运算。
+# 项目介绍
+本项目为内燃机性能仿真常用代码，用python语言开发，使用python编写的目的是能够使用最新的算法和框架。因为pytorch能够用GPU加速矩阵的运算，后期将使用pytorch框架构建一维非定常流动以及缸内CFD计算模块。本项目搭建的数据库均使用SQLite，数据交互使用json。
 
 # 本项目的模块包括
 
@@ -14,12 +14,17 @@
 - 气阀模块
 - 涡轮增压器模块
 - 发动机性能模块
+  - 发动机的平均值模型(Mean Value Engine Models)
+  - 发动机的容积法模型(Filling and Emptying models)
+  - 一维计算模型(1D engine models)
+  - 一维快速计算模型
+  - 一三维耦合模型
 
 
 
 # 附录 常用的内燃机性能仿真软件介绍
 
-[**意大利OpenWAM**](http://openwam.webs.upv.es/docs/) OpenWAM是一个开源的发动机仿真软件.
+[意大利OpenWAM](http://openwam.webs.upv.es/docs/) OpenWAM是一个开源的发动机仿真软件.
 
 [俄罗斯DIESEL-RK](https://diesel-rk.bmstu.ru/Eng/index.php) DIESEL-RK is a full cycle thermodynamic engine simulation software. One is designed for simulating and optimizing working processes of **two**- and **four-stroke** internal combustion engines with all types of boosting.
 
