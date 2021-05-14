@@ -2,11 +2,13 @@ def DicplacementVolumn(Bore, Stroke, NumberOfCYlinders=1):
     import math
     return math.pi / 4. * pow(Bore, 2) * Stroke * NumberOfCYlinders
 
-def WibeFunction(theta,SOC,TCD,a=6.908,m=2):
+
+def WibeFunction(theta, SOC, TCD, a=6.908, m=2):
     from math import exp
-    if theta<SOC:return 0
+    if theta < SOC:
+        return 0
     else:
-        return 1-exp(-a*pow((theta-SOC)/TCD,m+1))
+        return 1 - exp(-a * pow((theta - SOC) / TCD, m + 1))
 
 
 class CylinderGeometry:
@@ -363,6 +365,7 @@ class HeatReleaseData:
 class CylinderPressure:
     def __init__(self, _data):
         self.data = _data
+        self.data.setUnitToSI()
 
     def FFTTrasform(self, n, tau=4.):
         """
@@ -407,6 +410,115 @@ class CylinderPressure:
         result.table[0].data = self.data.table[0].data
         result.table[2].data = self.data.table[1].data
         return result
+
+    def netHeatReleaseRate(self, CylGeo, ivc=None, TBeforeValeve=50 + 173.15, plot=False):
+        def gamma(T):
+            return 1.338 - 6.0e-5 * T + 1.0e-8 * T * T
+
+        if ivc is None:
+            ivc = -180 + 50  # 进气门迟后角为30~70
+
+        from GasProperty import Rg
+        mc = self.data.linearInterpolate(ivc, 1) * CylGeo.V(ivc) / Rg() / chargeTemperature(TBeforeValeve)
+
+        result = self.data.selectColumns([0, 1])
+        result.diff(1)  # 求dp/dphi
+        from ArrayTable import PhsicalVarList
+        dQ = PhsicalVarList([], "$dQ/d\varphi$", "J/deg")
+        Vdata = PhsicalVarList([], "$V$", "$m^3$")
+        Tdata = PhsicalVarList([], "$T$", "K")
+        for i in range(result.row):
+            p = result.table[1].data[i]
+
+            V = CylGeo.V(result.table[0].data[i]);
+            Vdata.data.append(V)
+
+            T = p * V / Rg() / mc;
+            Tdata.data.append(T)
+
+            _gamma = gamma(T)
+
+            dQ.data.append(_gamma / (_gamma - 1) * p * CylGeo.DV(result.table[0].data[i]) + 1 / (_gamma - 1) * V *
+                           result.table[2].data[i])
+        result.appendColumn([Vdata, Tdata, dQ])
+
+        # find start of combustion and end of combustion
+        zeroindex = result.findMaxValueIndex(5)
+        while result.table[0].data[zeroindex] > 0:
+            zeroindex -= 1
+        while result.table[5].data[zeroindex] > 0:
+            zeroindex -= 1
+        fi0 = result.table[0].data[zeroindex]
+        fi1 = result.table[0].data[zeroindex + 1]
+        p20 = result.table[5].data[zeroindex]
+        p21 = result.table[5].data[zeroindex + 1]
+        soc = fi0 - p20 * (fi1 - fi0) / (p21 - p20)
+
+        zeroindex2 = result.findMaxValueIndex(5)
+        while result.table[0].data[zeroindex2] < 0:
+            zeroindex2 += 1
+        while result.table[5].data[zeroindex2] > 0:
+            zeroindex2 += 1
+        fi0 = result.table[0].data[zeroindex2 - 1]
+        fi1 = result.table[0].data[zeroindex2]
+        p20 = result.table[5].data[zeroindex - 1]
+        p21 = result.table[5].data[zeroindex2]
+        eoc = fi0 - p20 * (fi1 - fi0) / (p21 - p20)
+
+        if plot:
+            import matplotlib.pyplot as plt
+            fig, ax = plt.subplots(3, 1, figsize=(10, 10))
+
+            ax[0].plot(result.table[0].data, result.table[1].data)
+            ax[0].scatter(soc, result.linearInterpolate(soc, 1), color="r")
+            ax[0].scatter(eoc, result.linearInterpolate(eoc, 1), color="r")
+            ax[0].scatter(ivc, result.linearInterpolate(ivc, 1), color="r")
+            ax[0].set_ylabel("Cylinder pressure(Pa)")
+
+            ax[1].plot(result.table[0].data, result.table[4].data)
+            ax[1].scatter(soc, result.linearInterpolate(soc, 4), color="r")
+            ax[1].scatter(eoc, result.linearInterpolate(eoc, 4), color="r")
+            ax[1].set_ylabel("Temperature(K)")
+
+            ax[2].plot(result.table[0].data, result.table[5].data)
+            ax[2].set_ylabel("Net heat release rate(J/deg)")
+
+            plt.xticks([-360, -180, 0, 180, 360], ["-360\nTDC", "-180\nBDC", "0\nTDCF", "180\nBDC", "360\nTDC"])
+
+            # ax.axhline(y=0, color='r', linestyle="-.")
+            for i in range(3):
+                ax[i].axvline(x=0, color='g', linestyle=":")
+                ax[i].axvline(x=180, color='g', linestyle=":")
+                ax[i].axvline(x=-180, color='g', linestyle=":")
+                ax[i].axvline(x=360, color='g', linestyle=":")
+                ax[i].axvline(x=-360, color='g', linestyle=":")
+            ax[2].axhline(y=0, color='r', linestyle="-.")
+
+
+            maxTindex = result.findMaxValueIndex(4)
+            ax[1].scatter(result.table[0].data[maxTindex], result.table[4].data[maxTindex], color="r")
+            ax[1].annotate('Maximum T %.2f K' % result.table[4].data[maxTindex],
+                           xy=(result.table[0].data[maxTindex], result.table[4].data[maxTindex]), xycoords='data',
+                           xytext=(30, 0), textcoords='offset points',
+                           arrowprops=dict(arrowstyle="->"))
+
+            ax[2].scatter(soc, 0, color="r")
+            ax[2].annotate('Start of combustion %.3g $^\circ$CA' % soc,
+                           xy=(soc, 0), xycoords='data',
+                           xytext=(-170, 50), textcoords='offset points',
+                           arrowprops=dict(arrowstyle="->"))
+
+            ax[2].scatter(eoc, 0, color="r")
+            ax[2].annotate('End of combustion %.4g $^\circ$CA' % eoc,
+                           xy=(eoc, 0), xycoords='data',
+                           xytext=(0, 50), textcoords='offset points',
+                           arrowprops=dict(arrowstyle="->"))
+
+            plt.tight_layout()
+            plt.show()
+            # ax.plot()
+
+        return result, soc, eoc
 
     def PVDiagram(self, CylGeo):
         from ArrayTable import ArrayTable
@@ -527,6 +639,33 @@ class CylinderPressure:
             plt.show()
             return trueindex[-2], trueindex[-1]
 
+    def plot(self, ValveTiming=None):
+        self.data.doQuickSort(0)
+        import matplotlib.pyplot as plt
+        fig, ax = plt.subplots(1, figsize=(10, 10))
+        ax.plot(self.data.table[0].data, self.data.table[1].data)
+
+        index = self.data.findMaxValueIndex(1)
+        maxpreCA = self.data.table[0].data[index]
+        ax.scatter(maxpreCA, self.data.linearInterpolate(maxpreCA, 1))
+        ax.annotate('maxium pressure %.5g bar \nat angle %.4g $^\circ$CA' % (
+            self.data.linearInterpolate(maxpreCA, 1) / 1.e5, maxpreCA),
+                    xy=(maxpreCA, self.data.linearInterpolate(maxpreCA, 1)), xycoords='data',
+                    xytext=(-0, 10), textcoords='offset points',
+                    arrowprops=dict(arrowstyle="->"))
+
+        plt.xticks([-360, -180, 0, 180, 360], ["-360\nTDC", "-180\nBDC", "0\nTDCF", "180\nBDC", "360\nTDC"])
+
+        # ax.axhline(y=0, color='r', linestyle="-.")
+        ax.axvline(x=0, color='g', linestyle=":")
+        ax.axvline(x=180, color='g', linestyle=":")
+        ax.axvline(x=-180, color='g', linestyle=":")
+        ax.axvline(x=360, color='g', linestyle=":")
+        ax.axvline(x=-360, color='g', linestyle=":")
+
+        plt.tight_layout()
+        plt.show()
+
     def slice(self, left=None, right=None):
         if left is None or left < self.data.table[0].data[0]:
             left = self.data.table[0].data[0]
@@ -560,12 +699,102 @@ class CylinderPressure:
             result.append([self.data.table[0].data[i], temp,
                            CylGeo.V(self.data.table[0].data[i]) / CylGeo.V(self.data.table[0].data[i + 1]),
                            self.data.table[1].data[i + 1] / self.data.table[1].data[i]])
+        return result
+
+    def LogP_LogV(self, CylGeo, ivc=-180 + 50, evo=180 - 10, plot=False):
+        heatRelease, soc, eoc = self.netHeatReleaseRate(CylGeo, ivc)
+
+        from math import log
+        result = self.data.createSimilarEmptyTable([0, 1])
+        for i in range(self.data.row):
+            result.append([log(CylGeo.V(self.data.table[0].data[i])), log(self.data.table[1].data[i])])
+
+        compressPFi = self.data.slice(ivc, soc)
+        compress = self.data.createSimilarEmptyTable([0, 1])
+        for i in range(compressPFi.row):
+            compress.append([log(CylGeo.V(compressPFi.table[0].data[i])), log(compressPFi.table[1].data[i])])
+
+        compressfit, indexcom = compress.polyFit(1)
+
+        expensePFi = self.data.slice(eoc, evo)
+        expense = self.data.createSimilarEmptyTable([0, 1])
+        for i in range(expensePFi.row):
+            expense.append([log(CylGeo.V(expensePFi.table[0].data[i])), log(expensePFi.table[1].data[i])])
+
+        expensefit, indexex = expense.polyFit(1)
+
+        if plot:
+            import matplotlib.pyplot as plt
+            fig, ax = plt.subplots(1, figsize=(10, 10))
+            ax.plot(result.table[0].data, result.table[1].data)
+
+            ax.scatter(log(CylGeo.V(soc)), log(self.data.linearInterpolate(soc, 1)), color="g")
+            ax.annotate('SOC %.2f $^\circ$CA' % soc,
+                        xy=(log(CylGeo.V(soc)), log(self.data.linearInterpolate(soc, 1))),
+                        xycoords='data',
+                        xytext=(-40, -50), textcoords='offset points',
+                        arrowprops=dict(arrowstyle="->"))
+
+            ax.scatter(log(CylGeo.V(eoc)), log(self.data.linearInterpolate(eoc, 1)), color="g")
+            ax.annotate('EOC %.2f $^\circ$CA' % eoc,
+                        xy=(log(CylGeo.V(eoc)), log(self.data.linearInterpolate(eoc, 1))),
+                        xycoords='data',
+                        xytext=(0, 20), textcoords='offset points',
+                        arrowprops=dict(arrowstyle="->"))
+
+            ax.scatter(log(CylGeo.V(ivc)), log(self.data.linearInterpolate(ivc, 1)), color="g")
+            ax.annotate('IVC %.1f $^\circ$CA' % ivc,
+                        xy=(log(CylGeo.V(ivc)), log(self.data.linearInterpolate(ivc, 1))),
+                        xycoords='data',
+                        xytext=(0, 20), textcoords='offset points',
+                        arrowprops=dict(arrowstyle="->"))
+
+            ax.scatter(log(CylGeo.V(evo)), log(self.data.linearInterpolate(evo, 1)), color="g")
+            ax.annotate('EVO %.1f $^\circ$CA' % evo,
+                        xy=(log(CylGeo.V(evo)), log(self.data.linearInterpolate(evo, 1))),
+                        xycoords='data',
+                        xytext=(0, 20), textcoords='offset points',
+                        arrowprops=dict(arrowstyle="->"))
+
+            ax.plot(expensefit.table[0].data, expensefit.table[2].data, "r-.")
+            ax.annotate('compress isentropic index %.2f' % -indexcom[0],
+                        xy=((compressfit.table[0].data[0] + compressfit.table[0].data[-1]) / 2,
+                            compressfit.linearInterpolate(
+                                (compressfit.table[0].data[0] + compressfit.table[0].data[-1]) / 2, 2)),
+                        xycoords='data',
+                        xytext=(-150, -30), textcoords='offset points',
+                        arrowprops=dict(arrowstyle="->"))
+
+            ax.annotate('expense isentropic index %.2f' % -indexex[0],
+                        xy=((expensefit.table[0].data[0] + expensefit.table[0].data[-1]) / 2,
+                            expensefit.linearInterpolate(
+                                (expensefit.table[0].data[0] + expensefit.table[0].data[-1]) / 2, 2)),
+                        xycoords='data',
+                        xytext=(20, 10), textcoords='offset points',
+                        arrowprops=dict(arrowstyle="->"))
+
+            ax.plot(compressfit.table[0].data, compressfit.table[2].data, "r-.")
+            plt.xlabel("$log V$")
+            plt.ylabel("$log p$")
+
+            plt.tight_layout()
+            plt.show()
 
         return result
 
-    def netHeatReleaseRate(self):
-        def gamma(T):
-            return 1.338 - 6.0e-5 * T + 1.0e-8 * T * T
+    def EquivalentIsotropicIndex(self, CylGeo, reference_point=-200):
+        from ArrayTable import ArrayTable
+        from math import log
+        result = ArrayTable(2, 0)
+        Vref = CylGeo.V(reference_point)
+        pref = self.data.linearInterpolate(reference_point, 1)
+        result.setTableHeader(["Crank angle", "Equivalent Isotropic Index"])
+        result.setTableUnit(["°CA", "/"])
+        for i in range(self.data.row - 1):
+            temp = log(self.data.table[1].data[i + 1] / pref) / log(Vref / CylGeo.V(self.data.table[0].data[i + 1]))
+            result.append([self.data.table[0].data[i], temp])
+
+        return result
 
     def smooth(self, smoothType=None):
         smoothTypelist = [None, "five points three times smooth", "FFT smooth"]
@@ -773,17 +1002,18 @@ class MillerCycle:
             self.data.append([i, V, self.p7, self.T7, self.p7 * V / Rg(self.alpha) / self.T7])
 
 
-def IdealMillerCylcle(T2=400, Rp=0.01, Hu=42700e3, alpha=1.1, L0=14.3, k=None, eps=18, epsm=15, pik=4, etaTK=0.5,p0=1.e5):
+def IdealMillerCylcle(T2=400, Rp=0.01, Hu=42700e3, alpha=1.1, L0=14.3, k=None, eps=18, epsm=15, pik=4, etaTK=0.5,
+                      p0=1.e5):
     from GasProperty import cv_Justi, cp_Justi, k_Justi
     if k is None:
-        k=k_Justi(T2)
+        k = k_Justi(T2)
     cv = cv_Justi(T2)
     lamda = Rp * Hu / (alpha * L0 * cv * pow(epsm, k - 1) * T2) + 1
     cp = cp_Justi(T2)
     rho = Hu * (1 - Rp) / (k * Hu * Rp + alpha * L0 * pow(epsm, k - 1) * cp * T2) + 1
     pit = pow(1 - pow(eps / epsm, k - 1) * (pow(pik, (k - 1) / k) - 1) / lamda / pow(rho, k) / etaTK, -k / (k - 1))
     eta = 1 - (lamda * pow(rho, k) / pow(eps, k - 1) + (k - 1) * eps / pow(epsm, k) - k / pow(epsm, k - 1) - (k - 1) * (
-                1 - pit / pik) * (eps - 1) / pow(epsm, k)) / (lamda - 1 + k * lamda * (rho - 1))
+            1 - pit / pik) * (eps - 1) / pow(epsm, k)) / (lamda - 1 + k * lamda * (rho - 1))
     # BMEP=p0*pik*(((lamda-1)+k*lamda*(rho-1))
     return eta
 
@@ -869,12 +1099,15 @@ def mfcycle(ge, Pe, n, i=1):
     print("fuel mass injected per cylinder per cycle:{}mg".format(result * 1.e6))
     return result
 
+
 def mfcylclePim(VE):
     pass
 
-def massAir(Vd,ps=1.e5,Ts=300,VE=1.0):
+
+def massAir(Vd, ps=1.e5, Ts=300, VE=1.0):
     from GasProperty import Rg
-    return VE*ps*Vd/Rg()/Ts
+    return VE * ps * Vd / Rg() / Ts
+
 
 def thermalUsageIndex(gi, alpha, Cm, D, S, n, Ps, Ts):
     """
@@ -896,3 +1129,12 @@ def thermalUsageIndex(gi, alpha, Cm, D, S, n, Ps, Ts):
 
 def simpleWoschini():
     pass
+
+
+def chargeTemperature(TBeforeValve=50 + 273.15):
+    """
+    中速增压四冲程柴油机
+    :param TBeforeValve: 进气门前空气的温度(K)
+    :return:充量温度(K)
+    """
+    return 313. + 5. / 6. * (TBeforeValve - 273.15)

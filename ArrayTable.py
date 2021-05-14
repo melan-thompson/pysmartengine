@@ -1,5 +1,8 @@
 import sys
+
 sys.setrecursionlimit(100000)
+
+
 class PhsicalVarList:
     def __init__(self, data=list(), ColName="EmptyName", ColUnit="EmptyUnit"):
         self.ColName = ColName
@@ -86,8 +89,13 @@ class ArrayTable:
             self.row += 1
 
     def appendColumn(self, _data):
-        self.table.append(_data)
-        self.col += 1
+        if type(_data) == list:
+            for each in _data:
+                self.table.append(each)
+            self.col += len(_data)
+        else:
+            self.table.append(_data)
+            self.col += 1
 
     def clear(self):
         for i in range(self.col): self.table[i].data = list()
@@ -527,6 +535,28 @@ class ArrayTable:
                 result.append(self.table[i].data[_row])
             return result
 
+    def slice(self, left, right, _col=0):
+        if left < min(self.table[_col].data):
+            left = min(self.table[_col].data)
+
+        if right > max(self.table[_col].data):
+            right = max(self.table[_col].data)
+
+        self.doQuickSort(_col)
+        result = ArrayTable(self.col, 0)
+        head, unit = self.getHeader()
+        result.setTableHeader(head)
+        result.setTableUnit(unit)
+        start = 0
+        while self.table[_col].data[start] < left:
+            start += 1
+
+        while self.table[_col].data[start] < right:
+            result.append(self.getOneRecord(start))
+            start += 1
+
+        return result
+
     def convertDataToArray(self):
         result = list()
         for i in range(self.row):
@@ -691,11 +721,49 @@ class ArrayTable:
         y2 = self.table[col].data[right]
         return y1 * (x - x2) / (x1 - x2) + y2 * (x - x1) / (x2 - x1)
 
+    def selectColumns(self, colist):
+        result = ArrayTable(len(colist), 0)
+        head, unit = self.getHeader()
+        headS = [head[i] for i in colist]
+        units = [unit[i] for i in colist]
+        result.setTableHeader(headS)
+        result.setTableUnit(units)
+        for i in range(len(colist)):
+            result.table[i].data = self.table[colist[i]].data
+        result.col = len(colist)
+        result.row = self.row
+        return result
+
+    def polyFit(self, coly=1, colx=0, _deg=1):
+        from numpy import polyfit, polyval
+        para = polyfit(self.table[colx].data, self.table[coly].data, deg=_deg)
+        for i in range(len(para)):
+            print("({}*x^{})+".format(para[i], _deg - i), end="")
+        print("\b")
+
+        result = self.selectColumns([colx, coly])
+        colToApp = PhsicalVarList([], "Fitted data", result.table[1].ColUnit)
+        colToApp.data = polyval(para, result.table[0].data)
+        result.appendColumn(colToApp)
+        return result, para
+
+    def createSimilarEmptyTable(self, colist):
+        result = ArrayTable(len(colist), 0)
+        head, unit = self.getHeader()
+        headS = [head[i] for i in colist]
+        units = [unit[i] for i in colist]
+        result.setTableHeader(headS)
+        result.setTableUnit(units)
+        return result
+
     def setUnitToSI(self):
         for i in range(self.col):
             if self.table[i].ColUnit.strip() == "mm":
                 self.table[i].ColUnit = "m"
                 self.table[i] * 1.e-3
+            if self.table[i].ColUnit.strip() == "bar":
+                self.table[i].ColUnit = "Pa"
+                self.table[i] * 1.e5
             if self.table[i].ColUnit.strip() == "MPa":
                 self.table[i].ColUnit = "bar"
                 self.table[i] * 1.e1
@@ -777,7 +845,7 @@ class ArrayTable:
         self.__quickSort(0, self.row - 1, col)
 
     def __quickSort(self, left, right, col):
-        if left>=right:return
+        if left >= right: return
         i = left
         j = right
         base = self.getOneRecord(left)

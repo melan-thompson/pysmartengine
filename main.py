@@ -27,6 +27,22 @@ from Valve import *
 
 # Press the green button in the gutter to run the script.
 if __name__ == '__main__':
+    # print(TurbochargePressure(pme=14.7891e5,T_im=335.71,eta_et=0.3695,phi_a=1.668,VE=0.8637))
+
+    WP7=CylinderGeometry(108e-3,130e-3,209.7e-3,18)
+    pressure=ArrayTable()
+    pressure.readCSVFile("wp7缸压0.15.csv")
+
+    pre=CylinderPressure(pressure)
+    pre.netHeatReleaseRate(WP7,-110,plot=True)
+    # pre.slice(-110,-6)
+    # pre.LogP_LogV(WP7).polyFit().plot([1,2])
+    pre.LogP_LogV(WP7,plot=True,ivc=-154,evo=125)
+    # pre.data.polyFit(_deg=5).plot([1,2])
+    # pre.EquivalentIsotropicIndex(WP7,-90).slice(-60,-20).plot()
+    # pre.PVDiagram(WP7).Log_plot()
+    # pre.startOfCombustion(2)
+    # pre.plot()
     # T=ArrayTable(1,0)
     # T.append([6])
     # T.append([1])
@@ -76,17 +92,25 @@ if __name__ == '__main__':
     # table.plotfun(x,-120,60).plot()
     # table.plotfun(nozzle, 1.e5,1.e6).plot(0, 1)
 
-    C = CylinderGeometry(100e-3, 100e-3, 152e-3, 18)
-    print(massAir(C.displacedVolume(),2.7649e5,318))
-    I=IdealCylcle(C)
-    I.compress(-110,xr=0.07,Tim=318,Tr=1000,pim=2.7649e5)
-    # I.CompressData.plot(2)
-    I.Burn(Rp=0.01,alpha=1.7,SOC=1.5)
-    I.Expense()
-    I.pressureReconstruct()
-    I.gasExchange(pem=3.33e5)
-    I.analyze()
-    I.plot()
+
+    ###################缸压重构######################
+    # C = CylinderGeometry(100e-3, 100e-3, 152e-3, 18)
+    # print(massAir(C.displacedVolume(),2.7649e5,318))
+    # I=IdealCylcle(C)
+    # I.compress(-110,xr=0.07,Tim=318,Tr=1000,pim=2.7649e5)
+    # # I.CompressData.plot(2)
+    # I.Burn(Rp=0.01,alpha=1.7,SOC=-1.5)
+    # I.Expense()
+    # I.pressureReconstruct()
+    # I.gasExchange(pem=3.33e5)
+    # I.analyze()
+    # I.plot()
+
+
+
+
+
+
     # I.Rpressure.plot()
     # I.ExpanseData.plot(2)
     # I.ExpanseData.compareResultPlot([I.CompressData,I.GasExchange])

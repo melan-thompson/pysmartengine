@@ -1,5 +1,20 @@
 from GasProperty import *
 
+def TurbochargePressure(pme=10e5, T_im=300, eta_et=0.36, phi_a=1.1, VE=0.86, L0=14.3, Hu=42700e3):
+    """
+    计算增压压力
+    :param pme: 平均有效压力(Pa)
+    :param T_im: 进气管温度(K)
+    :param eta_et: 有效热效率
+    :param phi_a: 过量空气系数
+    :param VE: 充量系数，自然吸气式发动机最大为90%
+    :param L0: 燃空当量比
+    :param Hu: 燃料低热值
+    :return: 增压压力(Pa)
+    """
+    from GasProperty import Rg
+    return pme * T_im / eta_et * phi_a / VE * Rg() * L0 / Hu
+
 
 def TAfterCompressor(T0, pik, etak=1, tau=1):
     """

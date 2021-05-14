@@ -6,4 +6,5 @@ Output/
 __pycache__/
 .idea/
 *.db
-*csv
+*.csv
+
