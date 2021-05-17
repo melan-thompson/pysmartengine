@@ -130,6 +130,17 @@ class ValveDesign:
         print("IVO={}".format(self.IVO))
         print("IVC={}".format(self.IVC))
 
+    def changeTiming(self,EVO=None, EVC=None, IVO=None, IVC=None,TDC=0):
+        if EVO is not None:
+            self.EVO=mod(EVO,TDC)
+        if EVC is not None:
+            self.EVC=mod(EVC,TDC)
+        if IVO is not None:
+            self.IVO=mod(IVO,TDC)
+        if IVC is not None:
+            self.IVC=mod(IVC,TDC)
+
+
     def changeTDC(self, TDC=360):
         self.EVO += TDC
         self.EVC += TDC

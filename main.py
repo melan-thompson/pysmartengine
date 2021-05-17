@@ -4,6 +4,7 @@
 # Press Double Shift to search everywhere for classes, files, tool windows, actions, and settings.
 
 import sys
+
 sys.path.append("./Properties of working fluids/")
 sys.path.append("./Data/")
 sys.path.append("./Pipe/")
@@ -11,12 +12,14 @@ sys.path.append("./Algorithm/")
 sys.path.append("./Mean value engine models/")
 from ArrayTable import *
 
+
 def print_hi(name):
     # Use a breakpoint in the code line below to debug your script.
     print(f'Hi, {name}')  # Press Ctrl+F8 to toggle the breakpoint.
 
+
 from Cylinder import *
-#from GasProperty import *
+# from GasProperty import *
 from Compressor import *
 
 from FileManipulate import *
@@ -24,38 +27,44 @@ from Pipe import QPM
 from Algorithm import GP
 from MEEM import *
 from Valve import *
+from GP import *
 
 # Press the green button in the gutter to run the script.
 if __name__ == '__main__':
     # print(TurbochargePressure(pme=14.7891e5,T_im=335.71,eta_et=0.3695,phi_a=1.668,VE=0.8637))
+    # Gauss2DSample()
 
-    WP7=CylinderGeometry(108e-3,130e-3,209.7e-3,18)
-    pressure=ArrayTable()
-    pressure.readCSVFile("wp7缸压0.15.csv")
+    def combustionEfficiency(alpha):
+        return 0.98 * min(1, 1.2 * alpha - 0.2)
 
-    pre=CylinderPressure(pressure)
-    pre.netHeatReleaseRate(WP7,-110,plot=True)
+
+    table = ArrayTable(2,0)
+    for i in range(0,7):
+        table.append([i,combustionEfficiency(i)])
+    table.plot()
+    # table.plotfun(combustionEfficiency, 1, 7)
+
+    valveTiming = ValveDesign()
+    valveTiming.changeTiming(IVO=-377, IVC=-154, EVO=125, EVC=375)
+    # valveTiming.plot()
+
+    WP7 = CylinderGeometry(108e-3, 130e-3, 209.7e-3, 18)
+    pressure = ArrayTable()
+    pressure.readCSVFile("wp7缸压0.15.csv") 
+
+    pre = CylinderPressure(pressure)
+    pre.plot(valveTiming)
+    # pre.slice(-60,60)
+    # pre.polyTropicIndex(WP7,plot=True)
+    pre.netHeatReleaseRate(WP7, -110, plot=True)
     # pre.slice(-110,-6)
     # pre.LogP_LogV(WP7).polyFit().plot([1,2])
-    pre.LogP_LogV(WP7,plot=True,ivc=-154,evo=125)
+    pre.LogP_LogV(WP7, plot=True, ivc=-154, evo=125)
     # pre.data.polyFit(_deg=5).plot([1,2])
     # pre.EquivalentIsotropicIndex(WP7,-90).slice(-60,-20).plot()
     # pre.PVDiagram(WP7).Log_plot()
     # pre.startOfCombustion(2)
     # pre.plot()
-    # T=ArrayTable(1,0)
-    # T.append([6])
-    # T.append([1])
-    # T.append([2])
-    # T.append([7])
-    # T.append([9])
-    # T.append([3])
-    # T.append([4])
-    # T.append([5])
-    # T.append([10])
-    # T.append([8])
-    # T.doQuickSort(0)
-    # T.openWithProgram()
 
     # C=ValveDesign(TDC=0)
     # C.plot()
@@ -70,6 +79,7 @@ if __name__ == '__main__':
     # print(node)
     # print(B)
     from pandas import read_excel
+
     # data=read_excel("input.xlsx",header=None,sheet_name=0)
     # print(data[1])
 
@@ -92,24 +102,27 @@ if __name__ == '__main__':
     # table.plotfun(x,-120,60).plot()
     # table.plotfun(nozzle, 1.e5,1.e6).plot(0, 1)
 
-
     ###################缸压重构######################
-    # C = CylinderGeometry(100e-3, 100e-3, 152e-3, 18)
-    # print(massAir(C.displacedVolume(),2.7649e5,318))
-    # I=IdealCylcle(C)
-    # I.compress(-110,xr=0.07,Tim=318,Tr=1000,pim=2.7649e5)
-    # # I.CompressData.plot(2)
-    # I.Burn(Rp=0.01,alpha=1.7,SOC=-1.5)
-    # I.Expense()
-    # I.pressureReconstruct()
-    # I.gasExchange(pem=3.33e5)
+    C = CylinderGeometry(100e-3, 100e-3, 152e-3, 18)
+    print(massAir(C.displacedVolume(), 2.7649e5, 318))
+    I = IdealCylcle(WP7, valveTiming)
+    I.compress(-154, xr=0.07, Tim=318, Tr=1000, pim=180.05e3, kc=1.38)
+    # I.CompressData.plot(2)
+    I.Burn(Rp=0.01, alpha=1.63, SOC=-6.0)
+    I.Expense(ke=1.29)
+    I.pressureReconstruct(m=1.2)
+    I.gasExchange(pem=275.66e3)
+    I.data.doQuickSort()
+    I.analyze()
+    # I.plot()
+    # I.data.openWithProgram()
+    pressure.setUnitToSI()
+    # pressure.plot()
+    I.data.compareResultPlot([pressure])
+
+
     # I.analyze()
     # I.plot()
-
-
-
-
-
 
     # I.Rpressure.plot()
     # I.ExpanseData.plot(2)
@@ -136,9 +149,10 @@ if __name__ == '__main__':
     # table.interpolate2D()
     # table.scatter(1)
 
-    def fun(t,y):
+    def fun(t, y):
         from math import exp
-        return y*exp(t)
+        return y * exp(t)
+
 
     def fun1(x):
         import math
@@ -165,8 +179,6 @@ if __name__ == '__main__':
     #     table.append([i,i,piT(i,0.6,550)])
     # table.plot([1,2])
 
-
-
     # C=CylinderGeometry(100e-3,100e-3,160e-3,16)
     # # C.plotVolume()
     # cylce=MillerCycle(C)
@@ -184,7 +196,6 @@ if __name__ == '__main__':
     # # cylce.data.openWithProgram()
     # cylce.data.animation(2,1)
     # cylce.data.plot(3,1)
-
 
     # tt=1
     # import numpy as np
@@ -282,9 +293,5 @@ if __name__ == '__main__':
     # print(a.F())
     # print(a.e)
     # a.solve()
-
-
-
-
 
 # See PyCharm help at https://www.jetbrains.com/help/pycharm/

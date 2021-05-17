@@ -663,6 +663,32 @@ class CylinderPressure:
         ax.axvline(x=360, color='g', linestyle=":")
         ax.axvline(x=-360, color='g', linestyle=":")
 
+        ax.scatter(ValveTiming.IVC, self.data.linearInterpolate(ValveTiming.IVC, 1))
+        ax.annotate('IVC %.3g $^\circ$CA' % ValveTiming.IVC,
+                    xy=(ValveTiming.IVC, self.data.linearInterpolate(ValveTiming.IVC, 1)), xycoords='data',
+                    xytext=(0, 10), textcoords='offset points',
+                    arrowprops=dict(arrowstyle="->"))
+
+        ax.scatter(ValveTiming.EVO, self.data.linearInterpolate(ValveTiming.EVO, 1))
+        ax.annotate('EVO %.3g $^\circ$CA' % ValveTiming.EVO,
+                    xy=(ValveTiming.EVO, self.data.linearInterpolate(ValveTiming.EVO, 1)), xycoords='data',
+                    xytext=(0, 10), textcoords='offset points',
+                    arrowprops=dict(arrowstyle="->"))
+
+        ax.scatter(ValveTiming.EVC, self.data.linearInterpolate(ValveTiming.EVC, 1))
+        ax.annotate('EVC %.3g $^\circ$CA' % ValveTiming.EVC,
+                    xy=(ValveTiming.EVC, self.data.linearInterpolate(ValveTiming.EVC, 1)), xycoords='data',
+                    xytext=(0, 10), textcoords='offset points',
+                    arrowprops=dict(arrowstyle="->"))
+
+        ax.scatter(ValveTiming.IVO, self.data.linearInterpolate(ValveTiming.IVO, 1))
+        ax.annotate('IVO %.3g $^\circ$CA' % ValveTiming.IVO,
+                    xy=(ValveTiming.IVO, self.data.linearInterpolate(ValveTiming.IVO, 1)), xycoords='data',
+                    xytext=(0, 10), textcoords='offset points',
+                    arrowprops=dict(arrowstyle="->"))
+
+        plt.ylabel("Cylinder pressure(Pa)")
+        plt.xlabel("Crank angle")
         plt.tight_layout()
         plt.show()
 
@@ -687,7 +713,7 @@ class CylinderPressure:
             EVO = self.data.table[0].data[maxPreIndex] + 180. - 5.
         self.slice(IVC, EVO)
 
-    def ployTropicIndex(self, CylGeo):
+    def polyTropicIndex(self, CylGeo,plot=False):
         from ArrayTable import ArrayTable
         from math import log
         result = ArrayTable(4, 0)
@@ -699,6 +725,23 @@ class CylinderPressure:
             result.append([self.data.table[0].data[i], temp,
                            CylGeo.V(self.data.table[0].data[i]) / CylGeo.V(self.data.table[0].data[i + 1]),
                            self.data.table[1].data[i + 1] / self.data.table[1].data[i]])
+
+        if plot:
+            import matplotlib.pyplot as plt
+            fig, ax = plt.subplots(1, figsize=(10, 10))
+            ax.plot(result.table[0].data,result.table[1].data)
+            ax.axhline(y=-0, color='r', linestyle="-.")
+            ax.axhline(y=1, color='r', linestyle="-.")
+            ax.axhline(y=1.38, color='r', linestyle="-.")
+            # ax.axvline(x=0, color='r', linestyle="-.")
+            ax.set_ylim(-5,5)
+            ax.set_xlim(-120,160)
+
+            plt.yticks([0,1,1.4],["n=0,dp=0","n=1,dT=0","n=$\gamma$,dQ=0"])
+
+            plt.tight_layout()
+            plt.show()
+
         return result
 
     def LogP_LogV(self, CylGeo, ivc=-180 + 50, evo=180 - 10, plot=False):

@@ -47,6 +47,19 @@ def polt2DGaussianDistribution(plotrange, mean=None, cov=None):
     plt.tight_layout()
     plt.show()
 
+def Gauss2DSample(mean=None,cov=None,size=1000):
+    import numpy as np
+    import matplotlib.pyplot as plt
+    if mean is None:
+        mean=np.array([0]*2)
+    if cov is None:
+        cov=np.eye(2)
+
+    x, y = np.random.multivariate_normal(mean=mean, cov=cov, size=1000).T
+    plt.plot(x, y, 'ro')
+    plt.show()
+
+
 
 def gaussKenel(delta_x, thita=1, pk=1):
     from math import exp

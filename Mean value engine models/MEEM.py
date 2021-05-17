@@ -30,26 +30,26 @@ class IdealCylcle:
         else:
             self.ValveTiming = ValveTiming
 
-    def compress(self, ivc, pim=1.e5, Tim=300, Tr=800, xr=0.0, kc=1.3):
+    def compress(self, pim=1.e5, Tim=300, Tr=800, xr=0.0, kc=1.3,phic=1):
         from GasProperty import DieselMixture, Rg
-        self.ivc = ivc
+        ivc = self.ValveTiming.IVC
         self.pim = pivc = pim
+        Tim=313.+5./6.*(Tim-273.15)# 新鲜充量温度
         self.Tim = Tivc = Tim * (1 - xr) + xr * Tr
-        Vivc = self.CylGeo.V(ivc)
-        # mivc = pivc * Vivc / Rg() / Tivc
-        mivc = pivc * self.CylGeo.V(180) /  Rg() / Tivc
-        print("Intake air mass {} mg".format(mivc*1.e6))
+        # 新鲜充量质量
+        mivc = phic*pivc * self.CylGeo.V(180) /  Rg() / Tivc
         self.mix = DieselMixture()
         self.mix.init_With_Mc_r(mivc, xr, mivc / 14.3 / 1.1)
+        print("Intake air mass {} mg".format(mivc * 1.e6))
         print("Tivc=", Tivc)
 
+        Vivc = self.CylGeo.V(ivc)
         for i in range(ivc, ivc + 720):
             V = self.CylGeo.V(i)
             T = Tivc * pow(Vivc / V, kc - 1)
             p = pivc * pow(Vivc / V, kc)
             m = p * V / self.mix.Rg_gas(0) / T
             self.CompressData.append([i, V, p, T, m])
-
         from Valve import mod
         for i in range(self.CompressData.row):
             self.CompressData.table[0].data[i] = mod(self.CompressData.table[0].data[i])
@@ -120,11 +120,11 @@ class IdealCylcle:
         for i in arange(self.EOC, self.ValveTiming.EVO):
             self.data.append([i, self.ExpanseData.linearInterpolate(i, 2)])
 
-    def pressureReconstruct(self):
+    def pressureReconstruct(self,m=1):
         from Cylinder import WibeFunction
         from numpy import arange
         for i in arange(self.SOC, self.EOC):
-            temp = WibeFunction(i, self.SOC, self.EOC - self.SOC, m=1)
+            temp = WibeFunction(i, self.SOC, self.EOC - self.SOC, m=m)
             p = (1 - temp) * self.CompressData.linearInterpolate(i, 2) + temp * self.ExpanseData.linearInterpolate(i, 2)
             self.Rpressure.append([i, p])
 
@@ -166,16 +166,12 @@ class IdealCylcle:
         self.data.doQuickSort(0)
 
         import matplotlib.pyplot as plt
-        fig, ax = plt.subplots(1, figsize=(10, 10))
+        fig, ax = plt.subplots(1, figsize=(10, 5))
         ax.plot(self.data.table[0].data, self.data.table[1].data)
         plt.xlabel(self.data.table[0].ColName + "(" + self.data.table[0].ColUnit + ")")
         plt.ylabel(self.data.table[1].ColName + "(" + self.data.table[1].ColUnit + ")")
 
-        ax.scatter(self.ValveTiming.IVC, self.data.linearInterpolate(self.ValveTiming.IVC, 1))
-        ax.annotate('IVC %.3g $^\circ$CA' % self.ValveTiming.IVC,
-                    xy=(self.ValveTiming.IVC, self.data.linearInterpolate(self.ValveTiming.IVC, 1)), xycoords='data',
-                    xytext=(0, 10), textcoords='offset points',
-                    arrowprops=dict(arrowstyle="->"))
+
         ax.scatter(self.EOC, self.data.linearInterpolate(self.EOC, 1))
         ax.annotate('EOC %.3g $^\circ$CA' % self.EOC,
                     xy=(self.EOC, self.data.linearInterpolate(self.EOC, 1)), xycoords='data',
@@ -184,18 +180,19 @@ class IdealCylcle:
 
         index = self.data.findMaxValueIndex(1)
         maxpreCA = self.data.table[0].data[index]
+
         ax.scatter(maxpreCA, self.data.linearInterpolate(maxpreCA, 1))
         ax.annotate('maxium pressure %.5g bar' % (self.data.linearInterpolate(maxpreCA, 1) / 1.e5),
                     xy=(maxpreCA, self.data.linearInterpolate(maxpreCA, 1)), xycoords='data',
                     xytext=(0, 10), textcoords='offset points',
                     arrowprops=dict(arrowstyle="->"))
 
-        # ax.scatter(self.IVO, table.linearInterpolate(self.IVO, 1))
-        # ax.annotate('IVO %.3g $^\circ$CA' % self.IVO,
-        #             xy=(self.IVO, table.linearInterpolate(self.IVO, 1)), xycoords='data',
-        #             xytext=(0, 10), textcoords='offset points',
-        #             arrowprops=dict(arrowstyle="->"))
-        #
+        ax.scatter(self.ValveTiming.IVC, self.data.linearInterpolate(self.ValveTiming.IVC, 1))
+        ax.annotate('IVC %.3g $^\circ$CA' % self.ValveTiming.IVC,
+                    xy=(self.ValveTiming.IVC, self.data.linearInterpolate(self.ValveTiming.IVC, 1)), xycoords='data',
+                    xytext=(0, 10), textcoords='offset points',
+                    arrowprops=dict(arrowstyle="->"))
+
         ax.scatter(self.ValveTiming.EVO, self.data.linearInterpolate(self.ValveTiming.EVO, 1))
         ax.annotate('EVO %.3g $^\circ$CA' % self.ValveTiming.EVO,
                     xy=(self.ValveTiming.EVO, self.data.linearInterpolate(self.ValveTiming.EVO, 1)), xycoords='data',
