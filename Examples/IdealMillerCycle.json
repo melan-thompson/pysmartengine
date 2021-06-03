@@ -1,0 +1,24 @@
+{
+  "engine type": "AVL5496",
+  "bore,mm": 108,
+  "stroke,mm": 130,
+  "connecting rod length,mm":209,
+  "compression ratio": 18,
+  "number of cylinders": 6,
+  "data file": "../Data/机型数据.xlsx",
+
+  "environment pressure,Pa": 101325,
+  "environment temperature,K": 300,
+
+  "compressor pressure ratio": 2,
+  "compressor efficiency": 0.9,
+
+  "intake valve close timing,BBTC": -30,
+
+  "premixed burned fuel ratio": 0.01,
+  "excess air fuel ratio": 2,
+  "fuel low heat value,J/kg": 42700e3,
+  "stoichiometry air fuel ratio": 14.3,
+
+  "turbo efficiency": 0.54
+}

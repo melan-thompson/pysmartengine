@@ -12,7 +12,7 @@ def WibeFunction(theta, SOC, TCD, a=6.908, m=2):
 
 
 class CylinderGeometry:
-    def __init__(self, bore, stroke, connecting_rod_length=None, compression_ratio=None, number_of_cylinders=None):
+    def __init__(self, bore, stroke, connecting_rod_length=None, compression_ratio=None, number_of_cylinders=1):
         self.bore = bore
         self.stroke = stroke
         self.compression_ratio = compression_ratio
@@ -37,9 +37,8 @@ class CylinderGeometry:
             raise Exception("TDC clearance height is less than 0!!!Parameters have some problem.")
         print("TDC clearance height is:{} mm.".format(1.e3 * self.TDCclearanceHeight()))
         print("Single cylinder displacement volume is:{}L.".format(1.e3 * self.displacedVolume()))
-        if number_of_cylinders is not None:
-            print("Total displacement volume of the engine is:{}L".format(
-                1.e3 * number_of_cylinders * self.displacedVolume()))
+        self.num_of_cylinders=number_of_cylinders
+        print("Total displacement volume of the engine is:{}L".format(1.e3 * number_of_cylinders * self.displacedVolume()))
 
     def getFi(self, V):
         """
@@ -494,7 +493,6 @@ class CylinderPressure:
                 ax[i].axvline(x=-360, color='g', linestyle=":")
             ax[2].axhline(y=0, color='r', linestyle="-.")
 
-
             maxTindex = result.findMaxValueIndex(4)
             ax[1].scatter(result.table[0].data[maxTindex], result.table[4].data[maxTindex], color="r")
             ax[1].annotate('Maximum T %.2f K' % result.table[4].data[maxTindex],
@@ -713,7 +711,7 @@ class CylinderPressure:
             EVO = self.data.table[0].data[maxPreIndex] + 180. - 5.
         self.slice(IVC, EVO)
 
-    def polyTropicIndex(self, CylGeo,plot=False):
+    def polyTropicIndex(self, CylGeo, plot=False):
         from ArrayTable import ArrayTable
         from math import log
         result = ArrayTable(4, 0)
@@ -729,15 +727,15 @@ class CylinderPressure:
         if plot:
             import matplotlib.pyplot as plt
             fig, ax = plt.subplots(1, figsize=(10, 10))
-            ax.plot(result.table[0].data,result.table[1].data)
+            ax.plot(result.table[0].data, result.table[1].data)
             ax.axhline(y=-0, color='r', linestyle="-.")
             ax.axhline(y=1, color='r', linestyle="-.")
             ax.axhline(y=1.38, color='r', linestyle="-.")
             # ax.axvline(x=0, color='r', linestyle="-.")
-            ax.set_ylim(-5,5)
-            ax.set_xlim(-120,160)
+            ax.set_ylim(-5, 5)
+            ax.set_xlim(-120, 160)
 
-            plt.yticks([0,1,1.4],["n=0,dp=0","n=1,dT=0","n=$\gamma$,dQ=0"])
+            plt.yticks([0, 1, 1.4], ["n=0,dp=0", "n=1,dT=0", "n=$\gamma$,dQ=0"])
 
             plt.tight_layout()
             plt.show()
@@ -1044,6 +1042,38 @@ class MillerCycle:
             V = self.CylGeo.V(i)
             self.data.append([i, V, self.p7, self.T7, self.p7 * V / Rg(self.alpha) / self.T7])
 
+    def analyze(self,plot=True,speed=2000,tau=4,Hu=42700e3,index=0):
+        work=self.data.integrate(_coly=2,_colx=1)
+        effi=work/self.mix.gf/Hu
+        power=work*self.CylGeo.num_of_cylinders/(30*tau/speed)
+        IMEP=work/self.CylGeo.displacedVolume()
+        print("Power={}kW".format(power/1.e3))
+        print("IMEP={} bar".format(IMEP/1.e5))
+        print("Indicated thermal efficiency={}".format(effi))
+
+        if plot:
+            self.plot(index)
+
+    def plot(self,index=1):
+        import matplotlib.pyplot as plt
+        fig, ax = plt.subplots(1, 3, figsize=(20, 10))
+
+        ax[0].plot(self.data.table[index].data,self.data.table[2].data)
+        ax[0].axhline(y=self.p0, color='r', linestyle="-.")
+
+        ax[1].plot(self.data.table[index].data, self.data.table[3].data)
+        ax[1].axhline(y=self.T0, color='r', linestyle="-.")
+
+        ax[2].plot(self.data.table[index].data, self.data.table[4].data)
+        # ax[2].axhline(y=self.T0, color='r', linestyle="-.")
+
+        style = dict(size=10, color='black')
+        ax[0].text(self.data.table[1].data[0],-self.p0,"$p_0=%.2fbar$"%(self.p0/1.e5),ha="left",**style)
+
+        plt.tight_layout()
+        plt.show()
+
+
 
 def IdealMillerCylcle(T2=400, Rp=0.01, Hu=42700e3, alpha=1.1, L0=14.3, k=None, eps=18, epsm=15, pik=4, etaTK=0.5,
                       p0=1.e5):
@@ -1100,6 +1130,9 @@ def BMEP(n, Pe, TVH, stroke=4):
     """
     return Pe * (30 * stroke / n) / TVH
 
+def Power(BMEP,n,TVH,stroke=4):
+    return BMEP*TVH/(30 * stroke / n)
+
 
 def BSFC(etai, etam, Hu=42496e3):
     """
@@ -1132,6 +1165,7 @@ def BSFCexample(n):
 def mfcycle(ge, Pe, n, i=1):
     """
     计算单缸循环喷油量
+    {m_{f.cycle}} = \frac{{{P_e}{g_f}}}{{3600i}}\frac{{30\tau }}{n}
     :param ge: BSFC，燃油消耗率(g/(kW*h))
     :param Pe: Brake power 发动机功率(kW)
     :param n: Speed，发动机转速(r/min)
@@ -1147,12 +1181,33 @@ def mfcylclePim(VE):
     pass
 
 
+def pimFuel(mfcycle, Vs, phia=1.1, phic=0.85, Tim=300, L0=14.3):
+    """
+    作用:由燃油喷射量估算进气压力
+    公式：{p_{im}} = {m_{f.cycle}}{L_0}\frac{{{\phi _a}}}{{{\phi _c}}}\frac{{{R_g}{T_{im}}}}{{{V_s}}}
+    :param mfcycle:Injected mass per cycle per cylinder,单缸循环喷油量(kg)，也可为总的喷油量，此时Vs为发动机总排量
+    :param Vs:Single cylinder diceplacement volume,单缸工作
+    :param phia:Excess air fuel ratio,过量空气系数
+    :param phic:
+    :param Tim:
+    :param L0:
+    :return:
+    """
+    from GasProperty import Rg
+    return mfcycle * L0 * phia / phic * Rg(phia) * Tim / Vs
+
+
 def massAir(Vd, ps=1.e5, Ts=300, VE=1.0):
     from GasProperty import Rg
     return VE * ps * Vd / Rg() / Ts
 
 
-def thermalUsageIndex(gi, alpha, Cm, D, S, n, Ps, Ts):
+def thermalUsageIndex(gi, alpha, Cm, D, S, n, Ps, Ts, strokeNum=4):
+    # r'R = \frac{{{{\left( {\alpha {g_i}} \right)}^{0.5}}T_s^{1.5}C_m^{0.78}\left( {0.5 + \frac{D}{{2S}}} \right)}}{{\left( {Dn} \right){{\left( {D{p_s}} \right)}^{0.22}}}}
+    # {\xi _T} = \left\{ \begin{array}{l}'
+    # 1.028 - 0.00096R,四冲程增压柴油机\\
+    # 0.986 - 0.00025R,二冲程直流扫气十字头式增压柴油机
+    # \end{array} \right.
     """
     热利用系数
     :param gi:ISFC,指示燃油消耗率(g/(kW*h))
@@ -1167,7 +1222,10 @@ def thermalUsageIndex(gi, alpha, Cm, D, S, n, Ps, Ts):
     """
     R = pow(alpha * gi / 1e3, 0.5) * pow(Ts, 1.5) * pow(Cm, 0.78) * (0.5 + D / (2 * S)) / (
             (D * n) * pow(D * Ps / 1.e6, 0.22))
-    return 1.028 - 0.00096 * R
+    if strokeNum == 4:
+        return 1.028 - 0.00096 * R
+    elif strokeNum == 2:
+        return 0.986 - 2.5e-4 * R
 
 
 def simpleWoschini():
@@ -1181,3 +1239,34 @@ def chargeTemperature(TBeforeValve=50 + 273.15):
     :return:充量温度(K)
     """
     return 313. + 5. / 6. * (TBeforeValve - 273.15)
+
+
+def exhaustTemperature(ge=213, etam=0.86, alpha=1.2, phis=1, Ts=300, thermalUsage=0.9, l0=0.495, Hu=42496):
+    # {\xi _T}Hu - \frac{{3600}}{{{g_e}{\eta _m}}} + \alpha {\varphi _s}{L_0}{\left( {\mu {c_p}} \right)_s}{T_s} =
+    # \left( {\alpha {\varphi _s} - 1 + {\beta _0}} \right){L_0}{\left( {\mu {c_p}} \right)_T}{T_T}
+    """
+    排气温度预测公式
+    :param ge:
+    :param etam:
+    :param alpha:
+    :param phis:
+    :param Ts:
+    :param thermalUsage:
+    :param l0:
+    :param Hu:
+    :return:
+    """
+    from GasProperty import mucps, mucpT
+    beta = 1.034
+    Tt = 500
+    cps = mucps(Ts)
+
+    def fun(Tt):
+        return thermalUsage * Hu - 3600 / (ge / 1.e3 * etam) + alpha * phis * l0 * cps * Ts - (
+                alpha * phis - 1 + beta) * l0 * mucpT(Tt, alpha, phis) * Tt
+
+    h = 0.1
+    while abs(fun(Tt)) > 1.e-5:
+        Tt -= fun(Tt) / ((fun(Tt + h) - fun(Tt - h)) / 2 / h)
+
+    return Tt

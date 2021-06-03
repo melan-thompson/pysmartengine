@@ -2,7 +2,7 @@
 
 # Press Shift+F10 to execute it or replace it with your code.
 # Press Double Shift to search everywhere for classes, files, tool windows, actions, and settings.
-
+import math
 import sys
 
 sys.path.append("./Properties of working fluids/")
@@ -31,35 +31,124 @@ from GP import *
 
 # Press the green button in the gutter to run the script.
 if __name__ == '__main__':
+    # arraytable=ArrayTable()
+    # arraytable.readExcelFile("油耗.xlsx",sheetname=0,_header=[0,1])
+    # arraytable.groupPlot()
+    # arraytable.surfaceFit()
+    # arraytable.scatter3D()
+    # arraytable.openWithProgram()
+
+    # import pandas as pd
+    # import matplotlib.pyplot as plt
+    #
+    # plt.rcParams['font.sans-serif'] = ['SimHei']
+
+    import matplotlib as mpl
+    import numpy as np
+
+
+    # Make a modified version of cdict with some transparency
+    # in the middle of the range.cdict1['alpha'] = ((0.0, 1.0, 1.0),
+    #   (0.25,1.0, 1.0),
+    # (0.5, 0.3, 0.3),
+    #   (0.75,1.0, 1.0),
+    # (1.0, 1.0, 1.0))
+
+
+    # pp=pd.DataFrame([[1,2],[4,5]],columns=['a','b'])
+    # pp.plot.scatter(x='a',y='b')
+    # plt.show()
+    # sheet=pd.read_excel("功率计算.xlsx",sheet_name=None)
+    # print(list(sheet.keys()))
+
+    # df = pd.read_excel("机型数据.xlsx", sheet_name=0, header=0, usecols=range(85))
+    # result = df.columns.values
+    # print(result)
+    # group=df.groupby("应用")
+    # cleaned=df.dropna()
+    # name=list()
+    # for each,ii in group:
+    #     name.append(each)
+
+    data = pd.read_excel("油耗.xlsx")
+
+
+    # name = list()
+    # group = data.groupby("转速")
+    # for each, ii in group:
+    #     name.append(each)
+    # ii = 0
+    # ax=None
+    # for each in name:
+    #     ax = group.get_group(each).plot(x="扭矩", y="燃油消耗率", label=each, ax=ax)
+    #     ii += 1
+    # plt.show()
+    #
+    # plt.figure()
+    # ax = None
+    # df.plot.scatter(x="标定转速，rpm", y="平均有效压力,Mpa")
+    # ii=0
+    # for each in name:
+    #     ax=group.get_group(each).plot.scatter(x="缸径,mm",y="冲程,mm",label=each,ax=ax,c=cnames[list(cnames.keys())[ii]])
+    #     ii+=1
+    # plt.scatter(30,50,color='r')
+    # plt.tight_layout()
+    # # plt.legend()
+    # plt.show()
+    # df.plot.show()
+    # print(result[3], result[4])
+    # df.to_excel("you.xlsx",sheet_name="how")
+    # from os import system
+    # system("start you.xlsx")
+    # system("pause")
+    # print(df.columns.values)
+    # result=df.columns.values
+    # print(type(list(df[result[2]])))
+    # print(df.head())
     # print(TurbochargePressure(pme=14.7891e5,T_im=335.71,eta_et=0.3695,phi_a=1.668,VE=0.8637))
     # Gauss2DSample()
 
-    def combustionEfficiency(alpha):
-        return 0.98 * min(1, 1.2 * alpha - 0.2)
+    # def abs(x):
+    #     return x
+    #
+    # import torch as t
+    # from torch.autograd import Variable as V
+    # x=V(t.ones(1),requires_grad=True)
+    # y=abs(x)
+    # y.backward()
+    # print(x.grad)
 
+    # print(exhaustTemperature())
 
-    table = ArrayTable(2,0)
-    for i in range(0,7):
-        table.append([i,combustionEfficiency(i)])
-    table.plot()
+    # def combustionEfficiency(alpha):
+    #     return 0.98 * min(1, 1.2 * alpha - 0.2)
+    #
+    #
+    # table = ArrayTable(2,0)
+    # for i in range(0,7):
+    #     table.append([i,combustionEfficiency(i)])
+    # table.plot()
     # table.plotfun(combustionEfficiency, 1, 7)
 
     valveTiming = ValveDesign()
     valveTiming.changeTiming(IVO=-377, IVC=-154, EVO=125, EVC=375)
     # valveTiming.plot()
 
-    WP7 = CylinderGeometry(108e-3, 130e-3, 209.7e-3, 18)
+    WP7 = CylinderGeometry(108e-3, 130e-3, 209.7e-3, 18, 6)
+
+
+
     pressure = ArrayTable()
-    pressure.readCSVFile("wp7缸压0.15.csv") 
+    pressure.readCSVFile("wp7缸压0.15.csv")
 
     pre = CylinderPressure(pressure)
-    pre.plot(valveTiming)
+    # pre.plot(valveTiming)
     # pre.slice(-60,60)
     # pre.polyTropicIndex(WP7,plot=True)
-    pre.netHeatReleaseRate(WP7, -110, plot=True)
+    # pre.netHeatReleaseRate(WP7, -110, plot=True)
     # pre.slice(-110,-6)
     # pre.LogP_LogV(WP7).polyFit().plot([1,2])
-    pre.LogP_LogV(WP7, plot=True, ivc=-154, evo=125)
+    # pre.LogP_LogV(WP7, plot=True, ivc=-154, evo=125)
     # pre.data.polyFit(_deg=5).plot([1,2])
     # pre.EquivalentIsotropicIndex(WP7,-90).slice(-60,-20).plot()
     # pre.PVDiagram(WP7).Log_plot()
@@ -106,18 +195,21 @@ if __name__ == '__main__':
     C = CylinderGeometry(100e-3, 100e-3, 152e-3, 18)
     print(massAir(C.displacedVolume(), 2.7649e5, 318))
     I = IdealCylcle(WP7, valveTiming)
-    I.compress(-154, xr=0.07, Tim=318, Tr=1000, pim=180.05e3, kc=1.38)
+    I.compress(xr=0.07, Tim=318, Tr=1000, pim=200.9e3, kc=1.38, phic=1)
     # I.CompressData.plot(2)
-    I.Burn(Rp=0.01, alpha=1.63, SOC=-6.0)
+    I.Burn(Rp=0.01, alpha=1.63, SOC=-6)
     I.Expense(ke=1.29)
-    I.pressureReconstruct(m=1.2)
-    I.gasExchange(pem=275.66e3)
+    I.pressureReconstruct(m=1.9)
+    I.pit(p0e=1.e5 + 0.15e5, etaTK=0.6)
+    I.gasExchange()
     I.data.doQuickSort()
-    I.analyze()
+    I.analyze(plot=True)
     # I.plot()
     # I.data.openWithProgram()
     pressure.setUnitToSI()
     # pressure.plot()
+
+    # I.ExpanseData.plot(3)
     I.data.compareResultPlot([pressure])
 
 
@@ -181,21 +273,21 @@ if __name__ == '__main__':
 
     # C=CylinderGeometry(100e-3,100e-3,160e-3,16)
     # # C.plotVolume()
-    # cylce=MillerCycle(C)
-    # cylce.initCompressor(0.9,2)
-    # cylce.intake(100)
-    # cylce.adiabaticompress()
-    # cylce.preBurn(0.1)
-    # cylce.disffBurn()
-    #
-    # # cylce.premixBurn(1)
-    # # cylce.DisffusionBurn()
-    # cylce.expansion()
-    # cylce.supercriticalExhaust(0.8)
-    # cylce.subcritical()
-    # # cylce.data.openWithProgram()
-    # cylce.data.animation(2,1)
-    # cylce.data.plot(3,1)
+    cylce=MillerCycle(C)
+    cylce.initCompressor(0.9,2)
+    cylce.intake(100)
+    cylce.adiabaticompress()
+    cylce.preBurn(0.1)
+    cylce.disffBurn()
+
+    cylce.premixBurn(1)
+    cylce.DisffusionBurn()
+    cylce.expansion()
+    cylce.supercriticalExhaust(0.8)
+    cylce.subcritical()
+    # cylce.data.openWithProgram()
+    cylce.data.animation(2,1)
+    cylce.data.plot(3,1)
 
     # tt=1
     # import numpy as np

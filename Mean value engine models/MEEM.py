@@ -30,14 +30,15 @@ class IdealCylcle:
         else:
             self.ValveTiming = ValveTiming
 
-    def compress(self, pim=1.e5, Tim=300, Tr=800, xr=0.0, kc=1.3,phic=1):
+    def compress(self, pim=1.e5, Tim=300, Tr=800, xr=0.0, kc=1.3, phic=1):
+        self.kc=kc
         from GasProperty import DieselMixture, Rg
         ivc = self.ValveTiming.IVC
         self.pim = pivc = pim
-        Tim=313.+5./6.*(Tim-273.15)# 新鲜充量温度
+        Tim = 313. + 5. / 6. * (Tim - 273.15)  # 新鲜充量温度
         self.Tim = Tivc = Tim * (1 - xr) + xr * Tr
         # 新鲜充量质量
-        mivc = phic*pivc * self.CylGeo.V(180) /  Rg() / Tivc
+        mivc = phic * pivc * self.CylGeo.V(180) / Rg() / Tivc
         self.mix = DieselMixture()
         self.mix.init_With_Mc_r(mivc, xr, mivc / 14.3 / 1.1)
         print("Intake air mass {} mg".format(mivc * 1.e6))
@@ -56,6 +57,7 @@ class IdealCylcle:
         self.CompressData.doQuickSort(0)
 
     def Burn(self, Rp, SOC=-5, alpha=1, Hu=42700e3, L0=14.3):
+        self.Hu=Hu
         from numpy import arange
         for i in arange(self.ValveTiming.IVC, SOC):
             self.data.append([i, self.CompressData.linearInterpolate(i, 2)])
@@ -104,6 +106,7 @@ class IdealCylcle:
         return T
 
     def Expense(self, ke=1.33):
+        self.ke=ke
         from numpy import arange
         for i in arange(self.SOC, self.SOC + 360):
             V = self.CylGeo.V(i)
@@ -120,7 +123,7 @@ class IdealCylcle:
         for i in arange(self.EOC, self.ValveTiming.EVO):
             self.data.append([i, self.ExpanseData.linearInterpolate(i, 2)])
 
-    def pressureReconstruct(self,m=1):
+    def pressureReconstruct(self, m=1):
         from Cylinder import WibeFunction
         from numpy import arange
         for i in arange(self.SOC, self.EOC):
@@ -132,15 +135,54 @@ class IdealCylcle:
         for i in arange(self.SOC, self.EOC):
             self.data.append([i, self.Rpressure.linearInterpolate(i, 1)])
 
-    def gasExchange(self,pem=3.e5):
-        self.pem = pem
+    def pit(self, pik=2, p0e=1.e5, T0=273.15 + 20, etaTK=0.56):
+        from Compressor import piT
+        from GasProperty import k_exhaust_gu
+        # 计算排气门打开时的压力和温度
+        pevo = self.ExpanseData.linearInterpolate(self.ValveTiming.EVO, 2)
+        Tevo = self.ExpanseData.linearInterpolate(self.ValveTiming.EVO, 3)
+        # pevo = self.ExpanseData.linearInterpolate(180, 2)
+        # Tevo = self.ExpanseData.linearInterpolate(180, 3)
+        print("Temperature at EVO {}".format(Tevo))
+
+        def fun(x):
+            k = k_exhaust_gu(500)
+            def Ttfun(kk):
+                Tt0=Tevo * pow(x * p0e / pevo, (kk - 1) / kk)
+                return k_exhaust_gu(Tt0)-kk
+            h=0.01
+            while abs(Ttfun(k))>1.e-5:
+                k-=Ttfun(k)/((Ttfun(k+h)-Ttfun(k-h))/2./h)
+            Tt = Tevo * pow(x * p0e / pevo, (k - 1) / k)
+            return piT(pik, etaTK, Tt, T0, self.alpha * 14.7) - x
+
+        def fun2(x):
+            Tt=p0e*x/pevo*Tevo
+            return piT(pik, etaTK, Tt, T0, self.alpha * 14.7) - x
+
+        x = 2.0
+        h = 0.01
+        # while abs(fun(x)) > 1.e-5:
+        #     x -= fun(x) / ((fun(x + h) - fun(x - h)) / 2. / h)
+
+        while abs(fun2(x)) > 1.e-5:
+            x -= fun2(x) / ((fun2(x + h) - fun2(x - h)) / 2. / h)
+
+        print("Pressure ratio of turbine {}".format(x))
+        print("pressure before turbine {} bar".format(x * p0e / 1.e5))
+        print("Temperature before turbine {} K".format(Tevo * pow(x * p0e / pevo, (1.33 - 1) / 1.33)))
+        self.pem = x * p0e
+        return x * p0e
+
+    def gasExchange(self):
+        pem = self.pem
         from numpy import arange
         evc = self.ValveTiming.EVC
         int = self.ValveTiming.int = (self.ValveTiming.EVC + self.ValveTiming.IVC) / 2.
         for i in arange(self.ValveTiming.EVC, int):
             self.data.append([i, self.pim])
-        for i in arange(int, self.ivc):
-            temp = xi(i, int, self.ivc)
+        for i in arange(int, self.ValveTiming.IVC):
+            temp = xi(i, int, self.ValveTiming.IVC)
             p = self.pim * (1 - temp) + self.CompressData.linearInterpolate(i, 2) * temp
             self.data.append([i, p])
 
@@ -170,7 +212,6 @@ class IdealCylcle:
         ax.plot(self.data.table[0].data, self.data.table[1].data)
         plt.xlabel(self.data.table[0].ColName + "(" + self.data.table[0].ColUnit + ")")
         plt.ylabel(self.data.table[1].ColName + "(" + self.data.table[1].ColUnit + ")")
-
 
         ax.scatter(self.EOC, self.data.linearInterpolate(self.EOC, 1))
         ax.annotate('EOC %.3g $^\circ$CA' % self.EOC,
@@ -244,20 +285,38 @@ class IdealCylcle:
         plt.tight_layout()
         plt.show()
 
-    def analyze(self):
+    def analyze(self, speed=1500,plot=False):
         from ArrayTable import ArrayTable
+        from Cylinder import MeEff
+
         PV = ArrayTable(3, 0)
         self.data.doQuickSort(0)
         for i in range(self.data.row):
             PV.append(
                 [self.data.table[0].data[i], self.CylGeo.V(self.data.table[0].data[i]), self.data.table[1].data[i]])
 
+        PV.plot(2, 1)
         work = PV.integrate(2, _colx=1)
-        print("Injected fuel {} mg".format(self.mix.gf*1.e6))
+        power=work/(30*4/speed)
+        BMEP=work / self.CylGeo.displacedVolume()
+        etam = MeEff(self.CylGeo.bore, self.CylGeo.stroke * speed / 30, BMEP)
+        etait=work / (self.mix.gf * 42700e3)
+        print(work/(self.Hu*etam)/(self.mix.M_air(0)/self.L0/self.alpha))
 
-        print("BMEP={} bar".format(work / self.CylGeo.displacedVolume() / 1.e5))
-        # PV.plot(1)
-        # PV.plot(2, 0)
-        # PV.plot(2,1)
+        print("Injected fuel {} mg".format(self.mix.gf * 1.e6))
 
-        print("thermal efficiency {}".format(work / (self.mix.gf * 42700e3)))
+        print("Brake power {} kW".format(power/1.e3*self.CylGeo.num_of_cylinders*etam))
+
+        print("Mechanical efficiency {}".format(etam))
+
+        print("BMEP={} bar".format(BMEP/1.e5))
+
+        print("thermal efficiency {}".format(etait))
+
+        if plot:
+            self.plot()
+
+        return work
+
+    def loop(self):
+        pass

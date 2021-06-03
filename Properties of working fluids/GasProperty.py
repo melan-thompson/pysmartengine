@@ -121,6 +121,31 @@ def cv_exhaust_gu(T, alpha=1):
     # return (4.751276526 + 1.19900582e-3 * T - -1.42321698e-7 * pow(T, 2)) * pow(10, 3) * 4.187 / Me
 
 
+def mucps(Ts):
+    # \left( {\mu {c_p}} \right)_s = 27.59 + 0.0025{T_s}
+    """
+    计算排温时用到的空气平均定压摩尔比热容
+    :param Ts:进气管中的温度(K)
+    :return:空气平均定压摩尔比热容,kJ/(kmol * K)或者J/(mol * K)
+    """
+    return 27.59 + 2.5e-3 * Ts
+
+
+def mucpT(Tt, alpha=1.1, phis=1):
+    # {\left( {\mu {c_p}} \right)_T} = 8.315 + \frac{{20.47 + \left( {\alpha {\varphi _s} - 1} \right) \times
+    # 19.26}}{{\alpha {\varphi _s}}} + \frac{{3.6 + \left( {\alpha {\varphi _s} - 1} \right) \times 2.51}}{{\alpha {
+    # \varphi _s} \times {{10}^3}}}{T_T}
+    """
+    计算排气温度时，温度为$T_T$时废气平均定压摩尔比热容$[kJ/(kmol K)]$
+    :param Tt:排气温度(K)
+    :param alpha:过量空气系数
+    :param phis:扫气系数
+    :return:废气平均定压摩尔比热容$[kJ/(kmol K)]$
+    """
+    return 8.315 + (20.47 + (alpha * phis - 1) * 19.26) / (alpha * phis) + (3.6 + (alpha * phis - 1) * 2.51) / (
+                alpha * phis * 1e3) * Tt
+
+
 def k_exhaust_gu(T, alpha=1):
     return Rg(alpha) / cv_exhaust_gu(T, alpha) + 1
 
@@ -130,9 +155,9 @@ def cp_exhaust_gu(T, alpha=1):
 
 
 class DieselMixture:
-    def __init__(self,L0=14.3):
+    def __init__(self, L0=14.3):
         self.L0 = L0
-        #self.gf = gf
+        # self.gf = gf
         from ArrayTable import ArrayTable
         self.data = ArrayTable(8, 0)
         self.data.setTableHeader(["已燃百分比",
@@ -145,8 +170,8 @@ class DieselMixture:
                                 "J/(kg·k)"])
 
     def init_With_Ma_r(self, ma, r, gf):
-        self.ma=ma
-        self.r=r
+        self.ma = ma
+        self.r = r
         self.gf = gf
         if ma < self.L0 * self.gf:
             print("Charged air is too few to burn all the fuel!!")
@@ -156,8 +181,8 @@ class DieselMixture:
         self.xr = ma * r / (1 - r) / (1 + self.L0) / self.gf
         self.__initPropertyTable()
 
-    def init_With_Mc_r(self,mc,r,gf):
-        self.init_With_Ma_r((1-r)*mc,r,gf)
+    def init_With_Mc_r(self, mc, r, gf):
+        self.init_With_Ma_r((1 - r) * mc, r, gf)
 
     def init_With_Mc_AFA(self, mc, afa, gf):
         self.gf = gf
@@ -198,11 +223,11 @@ class DieselMixture:
     def cp(self, x, T):
         return cp_Justi(T, self.AFAK(x))
 
-    def u(self,x,T):
+    def u(self, x, T):
         return u_Justi(T, self.AFAK(x))
 
-    def h(self,x,T):
-        return h_Justi(T,self.AFAK(x))
+    def h(self, x, T):
+        return h_Justi(T, self.AFAK(x))
 
     def U(self, x, T):
         return self.M_total(x) * u_Justi(T, self.AFAK(x))

@@ -43,6 +43,7 @@ class PhsicalVarList:
         return sum(self.data) / len(self.data)
 
     def Var(self):
+        # 方差
         meanvalue = self.mean()
         temp = [(each - meanvalue) ** 2 for each in self.data]
         return sum(temp) / (len(self.data) - 1)
@@ -51,6 +52,28 @@ class PhsicalVarList:
         meanvalue = self.mean()
         result = [self.data[i] - meanvalue for i in range(len(self.data))]
         self.data = result
+
+    def convertToString(self):
+        self.data = [str(each) for each in self.data]
+
+    def isAllNumber(self):
+        def is_number(s):
+            try:
+                float(s)
+                return True
+            except ValueError:
+                pass
+            return False
+
+        return all([is_number(each) for each in self.data])
+
+    def convertToFloat(self):
+        if self.isAllNumber():
+            self.data = [float(each) for each in self.data]
+            return True
+        else:
+            print("can not convert all the data to double type!!!")
+            return False
 
     def __mul__(self, num):
         self.data = [each * num for each in self.data]
@@ -223,10 +246,20 @@ class ArrayTable:
                 self.table.append(coltoapp)
             self.setUnitToSI()
 
-    def readExcelFile(self, filename, sheetname, datatype="string", orient=0):
+    def readExcelFile(self, filename, sheetname=0, _header=[1, 2], datatype="double"):
+        # TitleUnit表示头和单位的排量方式，0意味着分开排列
         from pandas import read_excel
-        if orient == 1:
-            read_excel("")
+        df = read_excel(filename, sheet_name=sheetname, header=_header)
+        header = df.columns.values
+        colName = [each[0] for each in header]
+        colUnit = [each[1] for each in header]
+        for i in range(len(header)):
+            coltoapp = PhsicalVarList(df[header[i]], colName[i], colUnit[i])
+            self.appendColumn(coltoapp)
+        self.row = len(df[header[0]])
+        if datatype == "double":
+            for i in range(self.col):
+                self.table[i].convertToFloat()
 
     def readSQLiteTable(self, databasename, tablename):
         import sqlite3
@@ -291,6 +324,45 @@ class ArrayTable:
         for each in content:
             self.append(each)
         conn.close()
+
+    def surfaceFit(self, colx=0, coly=1, colz=2):
+        from sklearn.preprocessing import PolynomialFeatures
+        from sklearn import linear_model
+        poly_reg = PolynomialFeatures(degree=2)
+
+        X_ploy = poly_reg.fit_transform([self.table[colx].data, self.table[coly].data])
+        lin_reg_2 = linear_model.LinearRegression()
+        lin_reg_2.fit(X_ploy, self.table[colz].data)
+        predict_y = lin_reg_2.predict(X_ploy)
+        # strError = stdError_func(predict_y, y)
+        score = lin_reg_2.score(X_ploy, self.table[colz].data)
+        print("coefficients", lin_reg_2.coef_)
+        print(score)
+
+    # def groupPlot(self, groupcol=0, colx=1, coly=2,interoder=2):
+    #     import pandas as pd
+    #     from numpy import linspace
+    #     # import scipy.interpolate as inte
+    #     data = pd.DataFrame({"G":self.table[groupcol].data, "x":self.table[colx].data, "y":self.table[coly].data})
+    #     name = list()
+    #     group = data.groupby("G")
+    #     for each, ii in group:
+    #         name.append(each)
+    #     print("There are {} groups in the data: ".format(len(name)))
+    #     print(name)
+    #     import matplotlib.pyplot as plt
+    #     ax = None
+    #     ii = 0
+    #     for each in name:
+    #         xx = linspace(min(group.get_group(each)["x"]), max(group.get_group(each)["x"]), 100)
+    #         f = inte.interp1d(group.get_group(each)["x"], group.get_group(each)["y"], kind=2)
+    #         plt.plot(xx,f(xx))
+    #         # ax = group.get_group(each).plot(x="x", y="y", label=each, ax=ax)
+    #         # ii += 1
+    #     plt.ylabel(self.table[coly].ColName)
+    #     plt.xlabel(self.table[colx].ColName)
+    #     plt.rcParams['font.sans-serif'] = ['SimHei']
+    #     plt.show()
 
     def selectValidData(self, colist=[], isNumber=False):
         def is_number(s):
