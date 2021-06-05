@@ -82,6 +82,9 @@ class CylinderGeometry:
         return math.pi / 4 * self.bore ** 2 * self.stroke
         # return self.V(180) - self.V(0)
 
+    def totalDisplacedVolume(self):
+        return self.num_of_cylinders*self.displacedVolume()
+
     def heatExchangeArea(self, crank_angle):
         import math
         area = math.pi / 4 * self.bore ** 2
@@ -1197,7 +1200,16 @@ def pimFuel(mfcycle, Vs, phia=1.1, phic=0.85, Tim=300, L0=14.3):
     return mfcycle * L0 * phia / phic * Rg(phia) * Tim / Vs
 
 
-def massAir(Vd, ps=1.e5, Ts=300, VE=1.0):
+def massAir(Vd, ps=1.e5, Ts=300, VE=1.0,phis=1.0):
+    """
+    由进气管状态计算发动机进气量
+    :param Vd: 排量m^3
+    :param ps: 进气管压力(Pa)
+    :param Ts: 进气管温度(K)
+    :param VE: 充量系数
+    :param phis: 扫气系数
+    :return: 进气量(kg)
+    """
     from GasProperty import Rg
     return VE * ps * Vd / Rg() / Ts
 
@@ -1210,7 +1222,7 @@ def thermalUsageIndex(gi, alpha, Cm, D, S, n, Ps, Ts, strokeNum=4):
     # \end{array} \right.
     """
     热利用系数
-    :param gi:ISFC,指示燃油消耗率(g/(kW*h))
+    :param gi:ISFC,指示燃油消耗率(g/(kW*h)),等于机械效率乘以有效燃油消耗率
     :param alpha:Excess air fuel ratio,过量空气系数
     :param Cm:mean piston velocity,活塞平均运动速度(m/s)
     :param D:Bore,缸径(m)
