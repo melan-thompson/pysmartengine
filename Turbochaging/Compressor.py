@@ -3,6 +3,7 @@ import sys
 sys.path.append("../Properties of working fluids/")
 from GasProperty import *
 
+
 def twoPointInterpolate(x, _x=[0, 1], _y=[2, 3]):
     def fun(x):
         return (x - _x[0]) / (_x[1] - _x[0]) * _y[1] + (x - _x[1]) / (_x[0] - _x[1]) * _y[0]
@@ -59,7 +60,7 @@ def piK(Tt, pit, etat, etak, T0=273.15 + 20, air_fuel_ratio=23.85, ma=1, me=None
     :param etam:涡轮增压器机械效率
     :return:压气机压比
     """
-    if me is None:me=ma+ma/air_fuel_ratio
+    if me is None: me = ma + ma / air_fuel_ratio
 
     gammak = k_Justi(T0)
     gammat = k_exhaust_gu(Tt)
@@ -122,7 +123,8 @@ class Compressor:
             ax[0] = self.group.get_group(each).plot(x=self.headers[1], y=self.headers[3], label="speed=" + str(each),
                                                     ax=ax[0], marker="x")
         # surge line
-        xx = [];yy = []
+        xx = [];
+        yy = []
         for each in self.speeds:
             xx.append(self.group.get_group(each).iloc[0, 1])
             yy.append(self.group.get_group(each).iloc[0, 2])
@@ -198,7 +200,7 @@ class Compressor:
         self.map = self.map.append(newgroup)
 
         # 对转速排序
-        self.map.sort_values(by=[self.headers[0],self.headers[1]])
+        self.map.sort_values(by=[self.headers[0], self.headers[1]])
 
         # 分组
         self.group = self.map.groupby(self.headers[0])
@@ -243,7 +245,9 @@ class Compressor:
                 efficiency = twoPointInterpolate(massflowrate, [temp2[j - 1], temp2[j]], [temp3[j - 1], temp3[j]])
                 break
         from math import sqrt
-        print("Speed={},pressure ratio={},mass flow rate={}kg/s,efficiency={}".format(speed*sqrt(self.Tref), pik, massflowrate*self.Pref/sqrt(self.Tref), efficiency))
+        print("Speed={},pressure ratio={},mass flow rate={}kg/s,efficiency={}".format(speed * sqrt(self.Tref), pik,
+                                                                                      massflowrate * self.Pref / sqrt(
+                                                                                          self.Tref), efficiency))
         return massflowrate
 
 
@@ -274,11 +278,11 @@ class Turbine:
         for each in self.speeds:
             ax[1] = self.group.get_group(each).plot(x=self.headers[2], y=self.headers[1],
                                                     label="speed=" + str(each), ax=ax[1], marker="x")
-            ax[0] = self.group.get_group(each).plot(x=self.headers[1], y=self.headers[3], label="speed=" + str(each),
+            ax[0] = self.group.get_group(each).plot(x=self.headers[2], y=self.headers[3], label="speed=" + str(each),
                                                     ax=ax[0], marker="x")
 
         ax[0].set_ylabel(self.headers[3])
-        ax[1].set_ylabel(self.headers[2])
+        ax[1].set_ylabel(self.headers[1])
 
         # 删除图例
         if showlegend:
@@ -295,12 +299,12 @@ class Turbine:
 
 
 if __name__ == "__main__":
-    C = Compressor("./Data/CompressorMapMa.xlsx")
+    C = Compressor("./CompressorMapMa.xlsx")
     C.plot()
     C.interpolate(3)
     # C.massFlowrate(60000,0)
     C.plot(showlegend=True)
     hightlight = [C.massFlowrate(75000, 2.4), 2.4]
 
-    Turb = Turbine("./Data/TurbineMapMa.xlsx")
+    Turb = Turbine("./TurbineMapMa.xlsx")
     Turb.plot(showlegend=True)

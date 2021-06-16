@@ -1,5 +1,5 @@
 {
-  "engine type": "AVL5496",
+  "engine type": "WP7",
   "bore,mm": 108,
   "stroke,mm": 130,
   "connecting rod length,mm":209,
@@ -11,9 +11,9 @@
   "environment temperature,K": 300,
 
   "compressor pressure ratio": 2,
-  "compressor efficiency": 0.9,
+  "compressor efficiency": 0.5,
 
-  "intake valve close timing,BBTC": -30,
+  "intake valve close timing,bBTC": -30,
 
   "premixed burned fuel ratio": 0.01,
   "excess air fuel ratio": 2,

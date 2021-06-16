@@ -5,7 +5,9 @@ sys.path.append("../Properties of working fluids/")
 sys.path.append("../Data/")
 sys.path.append("../Pipe/")
 sys.path.append("../")
+sys.path.append("../Turbochaging/")
 from Cylinder import CylinderGeometry
+from Cylinder import MillerCycle
 
 
 if __name__=="__main__":
@@ -21,4 +23,14 @@ if __name__=="__main__":
         data=read_excel(setting["data file"],index_col="机型").loc[setting["engine type"]]
         cyl=CylinderGeometry(data["bore,mm"]*1.e-3,data["stroke,mm"]*1.e-3,data["connecting rod length,mm"]*1.e-3,data["compression ratio"],data["number of cylinders"])
 
-    cyl.plotVolume()
+    cylcle=MillerCycle(cyl,setting["environment pressure,Pa"],setting["environment temperature,K"])
+    cylcle.initCompressor(setting["compressor efficiency"],setting["compressor pressure ratio"])
+    cylcle.intake(setting["intake valve close timing,bBTC"])
+    cylcle.adiabaticompress()
+    cylcle.preBurn(setting["premixed burned fuel ratio"],setting["excess air fuel ratio"])
+    cylcle.disffBurn()
+    cylcle.expansion()
+    cylcle.supercriticalExhaust(setting["turbo efficiency"])
+    cylcle.subcritical()
+    cylcle.analyze(plot=False)
+    cylcle.plot(0)

@@ -143,7 +143,7 @@ def mucpT(Tt, alpha=1.1, phis=1):
     :return:废气平均定压摩尔比热容$[kJ/(kmol K)]$
     """
     return 8.315 + (20.47 + (alpha * phis - 1) * 19.26) / (alpha * phis) + (3.6 + (alpha * phis - 1) * 2.51) / (
-                alpha * phis * 1e3) * Tt
+            alpha * phis * 1e3) * Tt
 
 
 def k_exhaust_gu(T, alpha=1):
@@ -152,6 +152,21 @@ def k_exhaust_gu(T, alpha=1):
 
 def cp_exhaust_gu(T, alpha=1):
     return cv_exhaust_gu(T, alpha) + Rg(alpha)
+
+def m_fuel(m_total,alphak,L0=14.3):
+    # {g_f}{x_k} = \frac{{{G_s}}}{{{L_0}{\alpha _k} + 1}}
+    """
+    由缸内总质量和广义过量空气系数计算燃油量
+    :param m_total: 缸内总质量(kg)
+    :param alphak: 广义过量空气系数
+    :param L0: 燃空当量比
+    :return: 形成混合所需要的燃油量
+    """
+    if alphak<1:
+        raise Exception("excess air fuel ratio can not less than 1")
+    return m_total/(L0*alphak+1)
+
+
 
 
 class DieselMixture:
@@ -245,3 +260,23 @@ class DieselMixture:
                               self.M_total(i), self.M_air(i), self.M_exhaust(i), self.gf * i,
                               self.AFAK(i), self.M_exhaust(i) / self.M_total(i),
                               self.Rg_gas(i)])
+
+
+def cp_R(species="H2O", T=3000):
+    from pandas import read_excel
+    from math import pow
+    data = read_excel("Coefficient_for_species_1000_5000.xlsx", index_col="Species")
+    result=0
+    coeff=data.loc[species]
+    print(coeff)
+    for i in range(5):
+        result+=coeff[i]*pow(T/1000,i)
+        # print(coeff[i])
+    # result+=coeff[3]
+    # result+=coeff[4]*(T/1000)**5
+    return result
+
+
+if __name__ == "__main__":
+
+    print(cp_R())

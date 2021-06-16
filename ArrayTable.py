@@ -261,6 +261,33 @@ class ArrayTable:
             for i in range(self.col):
                 self.table[i].convertToFloat()
 
+    def readParameters(self, _fileName, _delimeter=','):
+        self.__init__()
+        import csv
+        with open(_fileName, 'r') as csvfile:
+            content = [each for each in csv.reader(csvfile, delimiter=_delimeter)]
+
+        while True:
+            if len(content[-1])==0:
+                content.pop()
+            else:
+                break
+        print(content)
+        for i in range(len(content)):
+            col = PhsicalVarList(data=[content[i][2]], ColName=content[i][0], ColUnit=content[i][1])
+            # col.show()
+            self.table.append(col)
+        self.col=len(content)
+        self.row=len(self.table[0].data)
+
+    def searchPara(self,parameter_name):
+        for i in range(self.col):
+            if self.table[i].ColName==parameter_name:
+                if len(self.table[i].data)==1:
+                    return self.table[i].data[0]
+                else:
+                    return self.table[i].data
+
     def readSQLiteTable(self, databasename, tablename):
         import sqlite3
         conn = sqlite3.connect(databasename)
@@ -419,6 +446,7 @@ class ArrayTable:
         # plt.axhline(y=0,color='r',linestyle="-.")
         # plt.axvline(x=0,color='g',linestyle=":")
         plt.tight_layout()
+        plt.rcParams['font.sans-serif'] = ['SimHei']
         plt.show()
         return plt
 
@@ -938,3 +966,10 @@ class ArrayTable:
 
         self.__quickSort(left, i - 1, col)
         self.__quickSort(i + 1, right, col)
+
+
+if __name__=="__main__":
+    T=ArrayTable()
+    T.readParameters("output.csv")
+    print(T.searchPara("有效功率"))
+    T.show()

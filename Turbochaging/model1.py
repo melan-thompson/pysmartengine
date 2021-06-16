@@ -9,7 +9,7 @@ from GasProperty import Rg,k_Justi
 if __name__=="__main__":
     import json
 
-    with open("input.json", mode='r', encoding='UTF-8') as f:
+    with open("model1input.json", mode='r', encoding='UTF-8') as f:
         setting = json.load(f)
 
     from pandas import read_excel
@@ -54,6 +54,12 @@ if __name__=="__main__":
 
     #计算进气量
     ma=massAir(cyl.totalDisplacedVolume(),Pk,Ts,setting["充量系数"],setting["扫气系数"])/(30*4/n)
+    print(cyl.totalDisplacedVolume())
+    print(Pk)
+    print(Pk*cyl.totalDisplacedVolume()/287/400)
+    print(massAir(cyl.totalDisplacedVolume(),Pk,Ts,setting["充量系数"],setting["扫气系数"]))
+    print(massAir(cyl.totalDisplacedVolume(),Pk,Ts,setting["充量系数"],setting["扫气系数"])/(120/2200))
+    print(Pk*cyl.totalDisplacedVolume()/287/300/(120/2200))
     print("进气流量:{}".format(ma))
 
     #计算涡轮膨胀比

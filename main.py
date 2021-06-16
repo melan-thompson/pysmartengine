@@ -31,6 +31,16 @@ from GP import *
 
 # Press the green button in the gutter to run the script.
 if __name__ == '__main__':
+    from ArrayTable import ArrayTable
+    T=ArrayTable()
+    T.readCSVFile("HeatReleaseRate_detail.csv")
+    T.show()
+
+    import pandas as pd
+    data=pd.read_csv("HeatReleaseRate_detail.csv",header=[0,1])
+    print(data)
+
+
     # arraytable=ArrayTable()
     # arraytable.readExcelFile("油耗.xlsx",sheetname=0,_header=[0,1])
     # arraytable.groupPlot()
@@ -70,7 +80,7 @@ if __name__ == '__main__':
     # for each,ii in group:
     #     name.append(each)
 
-    data = pd.read_excel("油耗.xlsx")
+    # data = pd.read_excel("油耗.xlsx")
 
 
     # name = list()
@@ -138,10 +148,10 @@ if __name__ == '__main__':
 
 
 
-    pressure = ArrayTable()
-    pressure.readCSVFile("wp7缸压0.15.csv")
-
-    pre = CylinderPressure(pressure)
+    # pressure = ArrayTable()
+    # pressure.readCSVFile("wp7缸压0.15.csv")
+    #
+    # pre = CylinderPressure(pressure)
     # pre.plot(valveTiming)
     # pre.slice(-60,60)
     # pre.polyTropicIndex(WP7,plot=True)
@@ -206,11 +216,11 @@ if __name__ == '__main__':
     I.analyze(plot=True)
     # I.plot()
     # I.data.openWithProgram()
-    pressure.setUnitToSI()
+    # pressure.setUnitToSI()
     # pressure.plot()
 
     # I.ExpanseData.plot(3)
-    I.data.compareResultPlot([pressure])
+    # I.data.compareResultPlot([pressure])
 
 
     # I.analyze()

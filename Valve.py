@@ -33,13 +33,28 @@ def flowUnitArea(p1, T1, R1, k1, p2, T2=0, R2=0, k2=0):
 class ValveSimple:
     def __init__(self, _flowArea=1.):
         from ArrayTable import ArrayTable
-        self.flowArea = 1
+        self.flowArea = _flowArea
         self.data = ArrayTable(2, 0)
         self.data.setTableHeader(["Pressure ratio", "Mass flow rate"])
         self.data.setTableUnit(["/", "kg/s"])
 
+        # 连接关系
+        self.next=None
+        self.last=None
+
     def __massFlowRate(self, p1, T1, R1, k1, p2, T2=0, R2=0, k2=0):
         return self.flowArea * flowUnitArea(p1, T1, R1, k1, p2, T2, R2, k2)
+
+    def connect_to(self,last,next):
+        self.last=last
+        self.last.next=self
+
+        self.next=next
+        self.next.last=self
+
+    def update(self):
+        self.dm_record=self.__massFlowRate(self.last.p,self.last.T,self.last.Rg,self.last.k,self.next.p,self.next.T,self.next.Rg,self.next.k)
+        # return self.dm_record
 
     def airFlowExample(self, p1, T1, p2=None, T2=None, K2=None):
         from GasProperty import Rg, k_Justi

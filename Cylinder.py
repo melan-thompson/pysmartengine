@@ -1,3 +1,10 @@
+import os
+import sys
+
+sys.path.append("Turbochaging/")
+sys.path.append("Properties of working fluids/")
+
+
 def DicplacementVolumn(Bore, Stroke, NumberOfCYlinders=1):
     import math
     return math.pi / 4. * pow(Bore, 2) * Stroke * NumberOfCYlinders
@@ -37,8 +44,9 @@ class CylinderGeometry:
             raise Exception("TDC clearance height is less than 0!!!Parameters have some problem.")
         print("TDC clearance height is:{} mm.".format(1.e3 * self.TDCclearanceHeight()))
         print("Single cylinder displacement volume is:{}L.".format(1.e3 * self.displacedVolume()))
-        self.num_of_cylinders=number_of_cylinders
-        print("Total displacement volume of the engine is:{}L".format(1.e3 * number_of_cylinders * self.displacedVolume()))
+        self.num_of_cylinders = number_of_cylinders
+        print("Total displacement volume of the engine is:{}L".format(
+            1.e3 * number_of_cylinders * self.displacedVolume()))
 
     def getFi(self, V):
         """
@@ -83,7 +91,7 @@ class CylinderGeometry:
         # return self.V(180) - self.V(0)
 
     def totalDisplacedVolume(self):
-        return self.num_of_cylinders*self.displacedVolume()
+        return self.num_of_cylinders * self.displacedVolume()
 
     def heatExchangeArea(self, crank_angle):
         import math
@@ -840,6 +848,10 @@ class CylinderPressure:
 
         return result
 
+    def heatReleaseRate(self):
+
+        pass
+
     def smooth(self, smoothType=None):
         smoothTypelist = [None, "five points three times smooth", "FFT smooth"]
         if smoothType not in smoothTypelist:
@@ -897,7 +909,7 @@ class MillerCycle:
         self.pk = self.p0 * pik
         self.Tk = TAfterCompressor(self.T0, pik, etak)
 
-    def intake(self, IVC=-30):
+    def intake(self, IVC=-30,phic=1):
         # 这里IVC为进气门相对于下止点的关闭角度，为0时代表在下止点关闭
         self.IVC = IVC + 180
         print("Effective compression ratio is {}".format(self.CylGeo.V(180 + IVC) / self.CylGeo.V(0)))
@@ -908,7 +920,7 @@ class MillerCycle:
         from numpy import arange
         for i in arange(0, 180 + IVC, 1):
             V = self.CylGeo.V(i)
-            self.data.append([i, self.CylGeo.V(i), self.pk, self.Tk, self.pk * V / Rg(1.e8) / self.Tk])
+            self.data.append([i, self.CylGeo.V(i), self.pk, self.Tk, phic*self.pk * V / Rg(1.e8) / self.Tk])
 
     def adiabaticompress(self):
         from numpy import arange
@@ -1027,13 +1039,14 @@ class MillerCycle:
         while abs(fun(piTinit)) > 1.e-5:
             dfun = (fun(piTinit + h) - fun(piTinit - h)) / 2 / h
             piTinit -= fun(piTinit) / dfun
-            print(piTinit)
+            # print(piTinit)
 
         # h = 0.01
         # while abs(fun(piTinit)) > 1.e-2:
         #     dfun = (fun(piTinit + h) - fun(piTinit - h)) / 2 / h
         #     piTinit -= fun(piTinit) / dfun
         #     print(piTinit)
+        self.pit=piTinit
         self.T7 = self.p0 * piTinit / self.p6 * self.T6
         self.p7 = self.p0 * piTinit
         self.data.append(
@@ -1045,24 +1058,35 @@ class MillerCycle:
             V = self.CylGeo.V(i)
             self.data.append([i, V, self.p7, self.T7, self.p7 * V / Rg(self.alpha) / self.T7])
 
-    def analyze(self,plot=True,speed=2000,tau=4,Hu=42700e3,index=0):
-        work=self.data.integrate(_coly=2,_colx=1)
-        effi=work/self.mix.gf/Hu
-        power=work*self.CylGeo.num_of_cylinders/(30*tau/speed)
-        IMEP=work/self.CylGeo.displacedVolume()
-        print("Power={}kW".format(power/1.e3))
-        print("IMEP={} bar".format(IMEP/1.e5))
+    def analyze(self, plot=True, speed=2000, tau=4, Hu=42700e3, index=0):
+        work = self.data.integrate(_coly=2, _colx=1)
+        effi = work / self.mix.gf / Hu
+        power = work * self.CylGeo.num_of_cylinders / (30 * tau / speed)
+        IMEP = work / self.CylGeo.displacedVolume()
+        print("Indicated power={}kW".format(power / 1.e3))
+        print("IMEP={} bar".format(IMEP / 1.e5))
         print("Indicated thermal efficiency={}".format(effi))
 
         if plot:
             self.plot(index)
+        return effi, IMEP, power
 
-    def plot(self,index=1):
+    def plot(self, index=1):
         import matplotlib.pyplot as plt
-        fig, ax = plt.subplots(1, 3, figsize=(20, 10))
+        fig, ax = plt.subplots(1, 3, figsize=(15, 9))
 
-        ax[0].plot(self.data.table[index].data,self.data.table[2].data)
-        ax[0].axhline(y=self.p0, color='r', linestyle="-.")
+        temp = [each / 1.e5 for each in self.data.table[2].data]
+
+        plt.rcParams['font.sans-serif'] = ['SimHei']
+
+        ax[0].plot(self.data.table[index].data, temp)
+        ax[0].axhline(y=self.p0 / 1.e5, color='r', linestyle="-.")
+        ax[0].set_xlabel("曲轴转角℃A")
+        ax[0].set_ylabel("气缸压力,bar")
+        ax[1].set_xlabel("曲轴转角℃A")
+        ax[1].set_ylabel("缸内温度,℃")
+        ax[2].set_xlabel("曲轴转角℃A")
+        ax[2].set_ylabel("缸内质量,kg")
 
         ax[1].plot(self.data.table[index].data, self.data.table[3].data)
         ax[1].axhline(y=self.T0, color='r', linestyle="-.")
@@ -1071,11 +1095,10 @@ class MillerCycle:
         # ax[2].axhline(y=self.T0, color='r', linestyle="-.")
 
         style = dict(size=10, color='black')
-        ax[0].text(self.data.table[1].data[0],-self.p0,"$p_0=%.2fbar$"%(self.p0/1.e5),ha="left",**style)
+        ax[0].text(self.data.table[1].data[0], -self.p0 / 1.e5, "$p_0=%.2fbar$" % (self.p0 / 1.e5), ha="left", **style)
 
         plt.tight_layout()
         plt.show()
-
 
 
 def IdealMillerCylcle(T2=400, Rp=0.01, Hu=42700e3, alpha=1.1, L0=14.3, k=None, eps=18, epsm=15, pik=4, etaTK=0.5,
@@ -1133,8 +1156,9 @@ def BMEP(n, Pe, TVH, stroke=4):
     """
     return Pe * (30 * stroke / n) / TVH
 
-def Power(BMEP,n,TVH,stroke=4):
-    return BMEP*TVH/(30 * stroke / n)
+
+def Power(BMEP, n, TVH, stroke=4):
+    return BMEP * TVH / (30 * stroke / n)
 
 
 def BSFC(etai, etam, Hu=42496e3):
@@ -1200,7 +1224,7 @@ def pimFuel(mfcycle, Vs, phia=1.1, phic=0.85, Tim=300, L0=14.3):
     return mfcycle * L0 * phia / phic * Rg(phia) * Tim / Vs
 
 
-def massAir(Vd, ps=1.e5, Ts=300, VE=1.0,phis=1.0):
+def massAir(Vd, ps=1.e5, Ts=300, VE=1.0, phis=1.0):
     """
     由进气管状态计算发动机进气量
     :param Vd: 排量m^3
@@ -1240,8 +1264,18 @@ def thermalUsageIndex(gi, alpha, Cm, D, S, n, Ps, Ts, strokeNum=4):
         return 0.986 - 2.5e-4 * R
 
 
-def simpleWoschini():
-    pass
+def simpleWoschini(D, cm, pz, Tz):
+    # {K_w} = 0.303{D^{ - 0.214}}{\left( {{v_m}{p_z}} \right)^{0.786}}{T_z}^{ - 0.525}
+    """
+    简单的Woschi传热公式
+    :param D: 缸径(m),
+    :param cm:活塞平均速度(m/s)
+    :param pz:缸内气体瞬时压力(Pa)
+    :param Tz:缸内气体瞬时温度(K)
+    :return:传热系数(W/(m^2*K))
+    """
+
+    0.303 * pow(D, -0.214) * pow(cm * pz / 1.e6, 0.786) * pow(Tz, -0.525)
 
 
 def chargeTemperature(TBeforeValve=50 + 273.15):
@@ -1282,3 +1316,182 @@ def exhaustTemperature(ge=213, etam=0.86, alpha=1.2, phis=1, Ts=300, thermalUsag
         Tt -= fun(Tt) / ((fun(Tt + h) - fun(Tt - h)) / 2 / h)
 
     return Tt
+
+
+class HeatTransfer:
+    def __init__(self, Head_Temperature, Piston_Temperature, Cylinder_Temperature, CorrectCoeff=1):
+        self.HT = Head_Temperature
+        self.PT = Piston_Temperature
+        self.CT = Cylinder_Temperature
+        self.Coeff = CorrectCoeff
+
+    def heatTransferRate(self, D, S, V, N, p, T):
+        from math import pi, pow
+        cm = N * S / 30
+        AL = 4. * V / D
+        return self.Coeff * simpleWoschini(D, cm, p, T) * (
+                    AL * (T - self.CT) + pi * pow(D, 2) / 4. * (2 * T - self.HT - self.PT)) / (2 * pi * N / 60)
+
+
+from GasProperty import Rg, k_Justi,cp_Justi,cv_Justi,u_Justi,h_Justi,m_fuel
+from ArrayTable import ArrayTable
+
+
+class Volume:
+    def __init__(self, V, p0, T0, alphak=1.e8):
+        # 初始化容积、质量、温度、压力
+        self.V = V
+        self.m = p0 * V / T0 / Rg(alphak)
+        self.T = T0
+        self.p = p0
+        self.alphak = alphak
+
+        # 初始化Rg,k
+        self.Rg = Rg(self.alphak)
+        self.k = k_Justi(self.T, self.alphak)
+        self.cp=cp_Justi(self.T,self.alphak)
+        self.cv=cv_Justi(self.T,self.alphak)
+        self.u=u_Justi(self.T,self.alphak)
+        self.h=h_Justi(self.T,self.alphak)
+
+        # 记录下这一步的质量变化
+        self.dm_record = None
+
+        # 连接
+        self.last = None
+        self.next = None
+
+        self.data = ArrayTable(11, 0)
+        self.data.setTableHeader(["时间","质量","压力","温度","过量空气系数","定压比热","定容比热","气体常数","比热容比","热力学能","焓"])
+
+    def dm(self):
+        if self.last is None:
+            min = 0
+        else:
+            min = self.last.dm_record
+        if self.next is None:
+            mout = 0
+        else:
+            mout = self.next.dm_record
+        self.dm_record = min - mout
+        return self.dm_record
+
+    # 必须先算dm再算dp
+    def dp(self, n=1.4):
+        return self.k * Rg(self.alphak) * self.T / self.V * self.dm_record
+
+    def dT(self):
+        if self.last is None:
+            Hin=0
+        elif self.last.dm_record>0:
+            Hin=self.last.last.h*self.last.dm_record
+        elif self.last.dm_record<0:
+            Hin=self.h*self.last.dm_record
+
+        if self.next is None:
+            Hout=0
+        elif self.next.dm_record>0:
+            Hout=self.h*self.next.dm_record
+        elif self.next.dm_record<0:
+            Hout=self.next.next.h*self.next.dm_record
+
+        return 1/self.m/self.cv*(Hin-Hout-self.u*self.dm_record)
+
+    def dAlpha(self,L0=14.3):
+        if self.last is None:
+            alphaIn=0
+            dmin=0
+        elif self.last.dm_record>0:
+            alphaIn=self.last.last.alphak
+            dmin=self.last.dm_record
+        elif self.last.dm_record<0:
+            alphaIn=self.alphak
+            dmin = self.last.dm_record
+
+        if self.next is None:
+            alphaOut=0
+            dmout=0
+        elif self.next.dm_record>0:
+            alphaOut=self.alphak
+            dmout=self.next.dm_record
+        elif self.next.dm_record<0:
+            alphaOut=self.next.next.alphak
+            dmout=self.next.dm_record
+
+        temp1=(self.alphak*L0+1)/(alphaIn*L0+1)
+        temp2=(self.alphak*L0+1)/(alphaOut*L0+1)
+        return (dmin * (1 - temp1) - dmout * (1 - temp2))/(m_fuel(self.m,self.alphak,L0)*L0)
+
+
+    def update(self):
+        # 温度压力变化后容积的变化
+        self.Rg = Rg(self.alphak)
+        self.k = k_Justi(self.T, self.alphak)
+        self.cp = cp_Justi(self.T, self.alphak)
+        self.cv = cv_Justi(self.T, self.alphak)
+        self.u = u_Justi(self.T, self.alphak)
+        self.h = h_Justi(self.T, self.alphak)
+        self.p=self.Rg*self.T/self.V
+
+
+    def record(self, t):
+        self.update()
+        self.data.append([t, self.m, self.p,self.T,self.alphak,self.cp,self.cv,self.Rg,self.k,self.u,self.h])
+
+
+if __name__ == "__main__":
+    import json
+
+
+
+    # from Valve import ValveSimple
+    #
+    # V1 = Volume(1, 1.e5, 300)
+    # V2 = Volume(2, 6.e5, 400)
+    # V3 = Volume(3, 1.e5, 500)
+    # valve = ValveSimple(1.e-3)
+    # valve2 = ValveSimple(2.e-3)
+    # valve3 = ValveSimple(2.e-3)
+    # valve.connect_to(V1, V2)
+    # valve2.connect_to(V2, V3)
+    # valve3.connect_to(V3, V1)
+
+    # dt = 0.01
+    # t = 0
+    # while t < 10:
+    #     valve.update()
+    #     # valve2.update()
+    #     # valve3.update()
+    #
+    #
+    #     V1.m += V1.dm() * dt
+    #     V1.T += V1.dT() * dt
+    #     V1.alphak+=V1.dAlpha()*dt
+    #
+    #     V2.m += V2.dm() * dt
+    #     V2.T += V2.dT() * dt
+    #     V2.alphak+=V2.dAlpha()*dt
+    #     # V3.m += V3.dm() * dt
+    #     # V3.p += V3.dp() * dt
+    #
+    #     V1.record(t)
+    #     V2.record(t)
+    #     # V3.record(t)
+    #     print("mass={}".format(V1.m + V2.m))
+    #
+    #     t += dt
+    #     print(V1.m)
+    #     print(V1.p)
+    #     # os.system("pause")
+    # V2.data.plot(4)
+    # V1.data.plot(4)
+    # V2.data.plot(3)
+    # V1.data.plot(3)
+    # V1.data.plot(2)
+    # V2.data.plot(2)
+    # V2.data.plot(3)
+    # V1.data.plot(3)
+
+    # V3.data.plot(2)
+    # print(V1.data.table[2].data[-1],V2.data.table[2].data[-1],V3.data.table[2].data[-1])
+
