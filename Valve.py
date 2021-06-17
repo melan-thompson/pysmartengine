@@ -13,7 +13,9 @@ def flowUnitArea(p1, T1, R1, k1, p2, T2=0, R2=0, k2=0):
         raise Exception("Inappropriate specific heat ratio!!!")
     from math import sqrt, pow
     TMP2 = p2 / p1
-    if TMP2 < 1.0:  ##正向流动
+    if abs(TMP2-1)<1.e-5:
+        return 0
+    elif TMP2 < 1.0:  ##正向流动
         TMP1 = sqrt(2 * k1 / R1 / T1)
         TMP3 = pow(2 / (k1 + 1), 1 / (k1 - 1))
         if TMP2 > pow(TMP3, k1):  ##正向亚临界流动

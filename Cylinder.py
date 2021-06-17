@@ -1444,20 +1444,20 @@ if __name__ == "__main__":
 
     V1 = Volume(1, 1.e5, 300,1)
     V2 = Volume(2, 6.e5, 400,10)
-    # V3 = Volume(3, 1.e5, 500,20)
+    V3 = Volume(3, 1.e5, 500,20)
     valve = ValveSimple(1.e-3)
-    # valve2 = ValveSimple(2.e-3)
-    # valve3 = ValveSimple(2.e-3)
+    valve2 = ValveSimple(2.e-3)
+    valve3 = ValveSimple(2.e-3)
     valve.connect_to(V1, V2)
-    # valve2.connect_to(V2, V3)
-    # valve3.connect_to(V3, V1)
+    valve2.connect_to(V2, V3)
+    valve3.connect_to(V3, V1)
 
     dt = 0.01
     t = 0
     while t < 10:
         valve.update(t)
-        # valve2.update()
-        # valve3.update()
+        valve2.update(t)
+        valve3.update(t)
 
         V1.m += V1.dm() * dt
         V1.T += V1.dT() * dt
@@ -1467,15 +1467,15 @@ if __name__ == "__main__":
         V2.T += V2.dT() * dt
         V2.alphak += V2.dAlpha() * dt
 
-        # V3.m += V3.dm() * dt
-        # V3.T += V3.dT() * dt
-        # V3.alphak += V3.dAlpha() * dt
+        V3.m += V3.dm() * dt
+        V3.T += V3.dT() * dt
+        V3.alphak += V3.dAlpha() * dt
         # V3.m += V3.dm() * dt
         # V3.p += V3.dp() * dt
 
         V1.record(t)
         V2.record(t)
-        # V3.record(t)
+        V3.record(t)
         # V3.record(t)
         print("mass={}".format(V1.m + V2.m))
 

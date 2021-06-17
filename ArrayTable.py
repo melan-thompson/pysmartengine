@@ -446,7 +446,11 @@ class ArrayTable:
         # plt.axhline(y=0,color='r',linestyle="-.")
         # plt.axvline(x=0,color='g',linestyle=":")
         plt.tight_layout()
+        # plt.rcParams['font.family'] = ['sans-serif']
         plt.rcParams['font.sans-serif'] = ['SimHei']
+
+        # 显式负号
+        plt.rcParams['axes.unicode_minus'] = False
         plt.show()
         return plt
 

@@ -153,7 +153,8 @@ def k_exhaust_gu(T, alpha=1):
 def cp_exhaust_gu(T, alpha=1):
     return cv_exhaust_gu(T, alpha) + Rg(alpha)
 
-def m_fuel(m_total,alphak,L0=14.3):
+
+def m_fuel(m_total, alphak, L0=14.3):
     # {g_f}{x_k} = \frac{{{G_s}}}{{{L_0}{\alpha _k} + 1}}
     """
     由缸内总质量和广义过量空气系数计算燃油量
@@ -162,11 +163,9 @@ def m_fuel(m_total,alphak,L0=14.3):
     :param L0: 燃空当量比
     :return: 形成混合所需要的燃油量
     """
-    if alphak<1:
+    if alphak < 1:
         raise Exception("excess air fuel ratio can not less than 1")
-    return m_total/(L0*alphak+1)
-
-
+    return m_total / (L0 * alphak + 1)
 
 
 class DieselMixture:
@@ -266,11 +265,11 @@ def cp_R(species="H2O", T=3000):
     from pandas import read_excel
     from math import pow
     data = read_excel("Coefficient_for_species_1000_5000.xlsx", index_col="Species")
-    result=0
-    coeff=data.loc[species]
+    result = 0
+    coeff = data.loc[species]
     print(coeff)
     for i in range(5):
-        result+=coeff[i]*pow(T/1000,i)
+        result += coeff[i] * pow(T / 1000, i)
         # print(coeff[i])
     # result+=coeff[3]
     # result+=coeff[4]*(T/1000)**5
@@ -278,5 +277,4 @@ def cp_R(species="H2O", T=3000):
 
 
 if __name__ == "__main__":
-
     print(cp_R())
