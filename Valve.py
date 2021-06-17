@@ -34,9 +34,9 @@ class ValveSimple:
     def __init__(self, _flowArea=1.):
         from ArrayTable import ArrayTable
         self.flowArea = _flowArea
-        self.data = ArrayTable(2, 0)
-        self.data.setTableHeader(["Pressure ratio", "Mass flow rate"])
-        self.data.setTableUnit(["/", "kg/s"])
+        self.data = ArrayTable(3, 0)
+        self.data.setTableHeader(["time","Pressure ratio", "Mass flow rate"])
+        self.data.setTableUnit(["s","/", "kg/s"])
 
         # 连接关系
         self.next=None
@@ -52,9 +52,13 @@ class ValveSimple:
         self.next=next
         self.next.last=self
 
-    def update(self):
+    def update(self,t):
         self.dm_record=self.__massFlowRate(self.last.p,self.last.T,self.last.Rg,self.last.k,self.next.p,self.next.T,self.next.Rg,self.next.k)
-        # return self.dm_record
+        self.record(t)
+        return self.dm_record
+
+    def record(self,t):
+        self.data.append([t,self.next.p/self.last.p,self.dm_record])
 
     def airFlowExample(self, p1, T1, p2=None, T2=None, K2=None):
         from GasProperty import Rg, k_Justi
