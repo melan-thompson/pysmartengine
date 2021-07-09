@@ -6,8 +6,8 @@ sys.path.append("../Data/")
 sys.path.append("../Pipe/")
 sys.path.append("../")
 sys.path.append("../Turbochaging/")
-from Cylinder import CylinderGeometry
-from Cylinder import MillerCycle
+from Cylinder.Cylinder import CylinderGeometry
+from Cylinder.Cylinder import MillerCycle
 
 
 if __name__=="__main__":
@@ -16,12 +16,12 @@ if __name__=="__main__":
         setting = json.load(f)
 
     if setting["engine type"] is None:
-        cyl=CylinderGeometry(setting["bore,mm"],setting["stroke,mm"],setting["connecting rod length,mm"],setting["compression ratio"],setting["number of cylinders"])
+        cyl=CylinderGeometry(setting["engine type"])
 
     else:
         from pandas import read_excel
         data=read_excel(setting["data file"],index_col="机型").loc[setting["engine type"]]
-        cyl=CylinderGeometry(data["bore,mm"]*1.e-3,data["stroke,mm"]*1.e-3,data["connecting rod length,mm"]*1.e-3,data["compression ratio"],data["number of cylinders"])
+        cyl=CylinderGeometry(setting["engine type"])
 
     cylcle=MillerCycle(cyl,setting["environment pressure,Pa"],setting["environment temperature,K"])
     cylcle.initCompressor(setting["compressor efficiency"],setting["compressor pressure ratio"])
@@ -33,4 +33,4 @@ if __name__=="__main__":
     cylcle.supercriticalExhaust(setting["turbo efficiency"])
     cylcle.subcritical()
     cylcle.analyze(plot=False)
-    cylcle.plot(0)
+    cylcle.plot(1)

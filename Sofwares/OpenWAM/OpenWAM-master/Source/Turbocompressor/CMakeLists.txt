@@ -1,0 +1,17 @@
+add_library(
+  Turbocompressor
+  TAcousticCompressor.cpp
+  TCompIsoReg.cpp
+  TCompresor.cpp
+  TCompresorDep.cpp
+  TCompressorMap.cpp
+  TCompTubDep.cpp
+  TCompTubos.cpp
+  TEffCorrector.cpp
+  TEjeTurbogrupo.cpp
+  TInterpMapaComp.cpp
+  TMapaComp.cpp
+  TMapaComp2Tub.cpp
+  TNewMapComp.cpp
+  TSAEMap.cpp
+  )

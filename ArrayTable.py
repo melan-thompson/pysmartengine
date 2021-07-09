@@ -268,7 +268,7 @@ class ArrayTable:
             content = [each for each in csv.reader(csvfile, delimiter=_delimeter)]
 
         while True:
-            if len(content[-1])==0:
+            if len(content[-1]) == 0:
                 content.pop()
             else:
                 break
@@ -277,13 +277,13 @@ class ArrayTable:
             col = PhsicalVarList(data=[content[i][2]], ColName=content[i][0], ColUnit=content[i][1])
             # col.show()
             self.table.append(col)
-        self.col=len(content)
-        self.row=len(self.table[0].data)
+        self.col = len(content)
+        self.row = len(self.table[0].data)
 
-    def searchPara(self,parameter_name):
+    def searchPara(self, parameter_name):
         for i in range(self.col):
-            if self.table[i].ColName==parameter_name:
-                if len(self.table[i].data)==1:
+            if self.table[i].ColName == parameter_name:
+                if len(self.table[i].data) == 1:
                     return self.table[i].data[0]
                 else:
                     return self.table[i].data
@@ -809,9 +809,20 @@ class ArrayTable:
                     self.table[_coly].data[i + 1] + self.table[_coly].data[i]) / 2.
         return result
 
+    # type=0 不循环，type=1 循环插值，插值前应该先排好序
     def linearInterpolate(self, x, col, type=0):
         left = 0
         right = self.row - 1
+
+        if type == 0:
+            if x < self.table[0].data[left] or x > self.table[0].data[right]:
+                return 0
+        if type == 1:
+            while x < self.table[0].data[left]:
+                x += 720
+            while x > self.table[0].data[right]:
+                x -= 720
+
         while left != right - 1:
             mid = (left + right) // 2
             if self.table[0].data[mid] <= x:
@@ -972,8 +983,8 @@ class ArrayTable:
         self.__quickSort(i + 1, right, col)
 
 
-if __name__=="__main__":
-    T=ArrayTable()
+if __name__ == "__main__":
+    T = ArrayTable()
     T.readParameters("output.csv")
     print(T.searchPara("有效功率"))
     T.show()

@@ -1,4 +1,4 @@
-from GasProperty import *
+from FluidProperties.GasProperty import *
 from ArrayTable import ArrayTable
 
 
@@ -9,8 +9,8 @@ class Node:
         self.U = None
 
     def Uinit(self, u, p, T, AFAK=1.e8, A=1):
-        from GasProperty import Rg
-        from GasProperty import k_Justi
+        # from GasProperty import Rg
+        # from GasProperty import k_Justi
         self.p = p
         self.T = T
         self.rho = p / (Rg(AFAK) * T)
@@ -35,8 +35,8 @@ class Node:
                 self.k - 1) * self.beta
 
     def solve(self, U=None, A=1, AFAK=1.e8):
-        from GasProperty import Rg
-        from GasProperty import k_Justi
+        # from GasProperty import Rg
+        # from GasProperty import k_Justi
         if U is None:
             U = self.U
         else:
@@ -495,6 +495,9 @@ class ShockTube:
     def StegerWarmingFVSAnimation(self):
         pass
 
+
+if __name__=="__main__":
+    ShockTube([1,1200,0.5e6],[0,300,0.1e6]).AnalyticalSolutionAnimation(0.6e-3)
 
 
 

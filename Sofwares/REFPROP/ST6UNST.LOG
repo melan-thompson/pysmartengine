@@ -1,0 +1,760 @@
+ %% PLEASE DO NOT MODIFY OR DELETE THIS FILE! %% 
+ %% This file contains information about the installation of an application. %% 
+ %% It will be used to automatically remove all application components from your computer if you choose to do so. %% 
+
+
+NOTE: Beginning of the bootstrapper section
+
+CONFIG: Title: "Refprop"
+
+ACTION: RegKey: "HKEY_LOCAL_MACHINE\SOFTWARE\Microsoft\Windows\CurrentVersion", "SharedDLLs"
+
+ACTION: SystemFile: "C:\WINDOWS\system32\VB6STKIT.DLL"
+(File currently on disk was already up to date)
+
+ACTION: SystemFile: "C:\WINDOWS\system32\COMCAT.DLL"
+(File currently on disk was already up to date)
+
+ACTION: SystemFile: "C:\WINDOWS\system32\stdole2.tlb"
+(File currently on disk was already up to date)
+
+ACTION: SystemFile: "C:\WINDOWS\system32\asycfilt.dll"
+(File currently on disk was already up to date)
+
+ACTION: SystemFile: "C:\WINDOWS\system32\olepro32.dll"
+(File currently on disk was already up to date)
+
+ACTION: SystemFile: "C:\WINDOWS\system32\oleaut32.dll"
+(File currently on disk was already up to date)
+
+ACTION: SystemFile: "C:\WINDOWS\system32\MSVBVM60.DLL"
+(File currently on disk was already up to date)
+
+ACTION: DllSelfRegister: "C:\WINDOWS\SYSTEM32\COMCAT.DLL"
+
+ACTION: TLBRegister: "C:\WINDOWS\SYSTEM32\stdole2.tlb"
+
+ACTION: DllSelfRegister: "C:\WINDOWS\SYSTEM32\olepro32.dll"
+
+ACTION: DllSelfRegister: "C:\WINDOWS\SYSTEM32\oleaut32.dll"
+
+ACTION: DllSelfRegister: "C:\WINDOWS\SYSTEM32\MSVBVM60.DLL"
+
+NOTE: End of the bootstrapper section
+
+NOTE: Now spawning the main Setup program 'Setup1.exe'....
+
+ACTION: CreateDir: "C:\Documents and Settings\hardin\Start Menu\Programs\REFPROP"
+
+ACTION: CreateDir: "C:\Program Files\REFPROP\Examples"
+
+ACTION: PrivateFile: "C:\Program Files\REFPROP\Examples\SAMPLE.BAS"
+(File was not found or was an older version -- new file copied)
+
+ACTION: PrivateFile: "C:\Program Files\REFPROP\REFPROP.XLS"
+(File was not found or was an older version -- new file copied)
+
+ACTION: PrivateFile: "C:\Program Files\REFPROP\mixtures\R509A.MIX"
+(File was not found or was an older version -- new file copied)
+
+ACTION: PrivateFile: "C:\Program Files\REFPROP\mixtures\R508B.MIX"
+(File was not found or was an older version -- new file copied)
+
+ACTION: PrivateFile: "C:\Program Files\REFPROP\mixtures\R508A.MIX"
+(File was not found or was an older version -- new file copied)
+
+ACTION: PrivateFile: "C:\Program Files\REFPROP\mixtures\R507A.MIX"
+(File was not found or was an older version -- new file copied)
+
+ACTION: PrivateFile: "C:\Program Files\REFPROP\mixtures\R504.MIX"
+(File was not found or was an older version -- new file copied)
+
+ACTION: PrivateFile: "C:\Program Files\REFPROP\mixtures\R503.MIX"
+(File was not found or was an older version -- new file copied)
+
+ACTION: PrivateFile: "C:\Program Files\REFPROP\mixtures\R502.MIX"
+(File was not found or was an older version -- new file copied)
+
+ACTION: PrivateFile: "C:\Program Files\REFPROP\mixtures\R501.MIX"
+(File was not found or was an older version -- new file copied)
+
+ACTION: PrivateFile: "C:\Program Files\REFPROP\mixtures\R500.MIX"
+(File was not found or was an older version -- new file copied)
+
+ACTION: PrivateFile: "C:\Program Files\REFPROP\mixtures\R438A.mix"
+(File was not found or was an older version -- new file copied)
+
+ACTION: PrivateFile: "C:\Program Files\REFPROP\mixtures\R434A.mix"
+(File was not found or was an older version -- new file copied)
+
+ACTION: PrivateFile: "C:\Program Files\REFPROP\mixtures\R433A.mix"
+(File was not found or was an older version -- new file copied)
+
+ACTION: PrivateFile: "C:\Program Files\REFPROP\mixtures\R432A.mix"
+(File was not found or was an older version -- new file copied)
+
+ACTION: PrivateFile: "C:\Program Files\REFPROP\mixtures\R431A.mix"
+(File was not found or was an older version -- new file copied)
+
+ACTION: PrivateFile: "C:\Program Files\REFPROP\mixtures\R430A.mix"
+(File was not found or was an older version -- new file copied)
+
+ACTION: PrivateFile: "C:\Program Files\REFPROP\mixtures\R429A.mix"
+(File was not found or was an older version -- new file copied)
+
+ACTION: PrivateFile: "C:\Program Files\REFPROP\mixtures\R428A.MIX"
+(File was not found or was an older version -- new file copied)
+
+ACTION: PrivateFile: "C:\Program Files\REFPROP\mixtures\R427A.MIX"
+(File was not found or was an older version -- new file copied)
+
+ACTION: PrivateFile: "C:\Program Files\REFPROP\mixtures\R426A.MIX"
+(File was not found or was an older version -- new file copied)
+
+ACTION: PrivateFile: "C:\Program Files\REFPROP\mixtures\R425A.MIX"
+(File was not found or was an older version -- new file copied)
+
+ACTION: PrivateFile: "C:\Program Files\REFPROP\mixtures\R424A.MIX"
+(File was not found or was an older version -- new file copied)
+
+ACTION: PrivateFile: "C:\Program Files\REFPROP\mixtures\R423A.MIX"
+(File was not found or was an older version -- new file copied)
+
+ACTION: PrivateFile: "C:\Program Files\REFPROP\mixtures\R422D.MIX"
+(File was not found or was an older version -- new file copied)
+
+ACTION: PrivateFile: "C:\Program Files\REFPROP\mixtures\R422C.MIX"
+(File was not found or was an older version -- new file copied)
+
+ACTION: PrivateFile: "C:\Program Files\REFPROP\mixtures\R422B.MIX"
+(File was not found or was an older version -- new file copied)
+
+ACTION: PrivateFile: "C:\Program Files\REFPROP\mixtures\R422A.MIX"
+(File was not found or was an older version -- new file copied)
+
+ACTION: PrivateFile: "C:\Program Files\REFPROP\mixtures\R421B.MIX"
+(File was not found or was an older version -- new file copied)
+
+ACTION: PrivateFile: "C:\Program Files\REFPROP\mixtures\R421A.MIX"
+(File was not found or was an older version -- new file copied)
+
+ACTION: PrivateFile: "C:\Program Files\REFPROP\mixtures\R420A.MIX"
+(File was not found or was an older version -- new file copied)
+
+ACTION: PrivateFile: "C:\Program Files\REFPROP\mixtures\R419A.MIX"
+(File was not found or was an older version -- new file copied)
+
+ACTION: PrivateFile: "C:\Program Files\REFPROP\mixtures\R418A.MIX"
+(File was not found or was an older version -- new file copied)
+
+ACTION: PrivateFile: "C:\Program Files\REFPROP\mixtures\R417A.MIX"
+(File was not found or was an older version -- new file copied)
+
+ACTION: PrivateFile: "C:\Program Files\REFPROP\mixtures\R416A.MIX"
+(File was not found or was an older version -- new file copied)
+
+ACTION: PrivateFile: "C:\Program Files\REFPROP\mixtures\R415B.MIX"
+(File was not found or was an older version -- new file copied)
+
+ACTION: PrivateFile: "C:\Program Files\REFPROP\mixtures\R415A.MIX"
+(File was not found or was an older version -- new file copied)
+
+ACTION: PrivateFile: "C:\Program Files\REFPROP\mixtures\R414B.MIX"
+(File was not found or was an older version -- new file copied)
+
+ACTION: PrivateFile: "C:\Program Files\REFPROP\mixtures\R414A.MIX"
+(File was not found or was an older version -- new file copied)
+
+ACTION: PrivateFile: "C:\Program Files\REFPROP\mixtures\R413A.MIX"
+(File was not found or was an older version -- new file copied)
+
+ACTION: PrivateFile: "C:\Program Files\REFPROP\mixtures\R412A.MIX"
+(File was not found or was an older version -- new file copied)
+
+ACTION: PrivateFile: "C:\Program Files\REFPROP\mixtures\R411B.MIX"
+(File was not found or was an older version -- new file copied)
+
+ACTION: PrivateFile: "C:\Program Files\REFPROP\mixtures\R411A.MIX"
+(File was not found or was an older version -- new file copied)
+
+ACTION: PrivateFile: "C:\Program Files\REFPROP\mixtures\R410B.MIX"
+(File was not found or was an older version -- new file copied)
+
+ACTION: PrivateFile: "C:\Program Files\REFPROP\mixtures\R410A.MIX"
+(File was not found or was an older version -- new file copied)
+
+ACTION: PrivateFile: "C:\Program Files\REFPROP\mixtures\R409B.MIX"
+(File was not found or was an older version -- new file copied)
+
+ACTION: PrivateFile: "C:\Program Files\REFPROP\mixtures\R409A.MIX"
+(File was not found or was an older version -- new file copied)
+
+ACTION: PrivateFile: "C:\Program Files\REFPROP\mixtures\R408A.MIX"
+(File was not found or was an older version -- new file copied)
+
+ACTION: PrivateFile: "C:\Program Files\REFPROP\mixtures\R407E.MIX"
+(File was not found or was an older version -- new file copied)
+
+ACTION: PrivateFile: "C:\Program Files\REFPROP\mixtures\R407D.MIX"
+(File was not found or was an older version -- new file copied)
+
+ACTION: PrivateFile: "C:\Program Files\REFPROP\mixtures\R407C.MIX"
+(File was not found or was an older version -- new file copied)
+
+ACTION: PrivateFile: "C:\Program Files\REFPROP\mixtures\R407B.MIX"
+(File was not found or was an older version -- new file copied)
+
+ACTION: PrivateFile: "C:\Program Files\REFPROP\mixtures\R407A.MIX"
+(File was not found or was an older version -- new file copied)
+
+ACTION: PrivateFile: "C:\Program Files\REFPROP\mixtures\R406A.MIX"
+(File was not found or was an older version -- new file copied)
+
+ACTION: PrivateFile: "C:\Program Files\REFPROP\mixtures\R405A.MIX"
+(File was not found or was an older version -- new file copied)
+
+ACTION: PrivateFile: "C:\Program Files\REFPROP\mixtures\R404A.MIX"
+(File was not found or was an older version -- new file copied)
+
+ACTION: PrivateFile: "C:\Program Files\REFPROP\mixtures\R403B.MIX"
+(File was not found or was an older version -- new file copied)
+
+ACTION: PrivateFile: "C:\Program Files\REFPROP\mixtures\R403A.MIX"
+(File was not found or was an older version -- new file copied)
+
+ACTION: PrivateFile: "C:\Program Files\REFPROP\mixtures\R402B.MIX"
+(File was not found or was an older version -- new file copied)
+
+ACTION: PrivateFile: "C:\Program Files\REFPROP\mixtures\R402A.MIX"
+(File was not found or was an older version -- new file copied)
+
+ACTION: PrivateFile: "C:\Program Files\REFPROP\mixtures\R401C.MIX"
+(File was not found or was an older version -- new file copied)
+
+ACTION: PrivateFile: "C:\Program Files\REFPROP\mixtures\R401B.MIX"
+(File was not found or was an older version -- new file copied)
+
+ACTION: PrivateFile: "C:\Program Files\REFPROP\mixtures\R401A.MIX"
+(File was not found or was an older version -- new file copied)
+
+ACTION: PrivateFile: "C:\Program Files\REFPROP\mixtures\HIGHN2.MIX"
+(File was not found or was an older version -- new file copied)
+
+ACTION: PrivateFile: "C:\Program Files\REFPROP\mixtures\HIGHCO2.MIX"
+(File was not found or was an older version -- new file copied)
+
+ACTION: PrivateFile: "C:\Program Files\REFPROP\mixtures\GLFCOAST.MIX"
+(File was not found or was an older version -- new file copied)
+
+ACTION: PrivateFile: "C:\Program Files\REFPROP\mixtures\EKOFISK.MIX"
+(File was not found or was an older version -- new file copied)
+
+ACTION: PrivateFile: "C:\Program Files\REFPROP\mixtures\AMARILLO.MIX"
+(File was not found or was an older version -- new file copied)
+
+ACTION: PrivateFile: "C:\Program Files\REFPROP\mixtures\AIR.MIX"
+(File was not found or was an older version -- new file copied)
+
+ACTION: PrivateFile: "C:\Program Files\REFPROP\FLUIDSET.LST"
+(File was not found or was an older version -- new file copied)
+
+ACTION: PrivateFile: "C:\Program Files\REFPROP\Examples\MATLAB.ZIP"
+(File was not found or was an older version -- new file copied)
+
+ACTION: PrivateFile: "C:\Program Files\REFPROP\examples\EXAMPLE.FOR"
+(File was not found or was an older version -- new file copied)
+
+ACTION: PrivateFile: "C:\Program Files\REFPROP\examples\EX-PPF.FOR"
+(File was not found or was an older version -- new file copied)
+
+ACTION: PrivateFile: "C:\Program Files\REFPROP\examples\EX-MIX.FOR"
+(File was not found or was an older version -- new file copied)
+
+ACTION: PrivateFile: "C:\Program Files\REFPROP\Examples\CPP.ZIP"
+(File was not found or was an older version -- new file copied)
+
+ACTION: PrivateFile: "C:\Program Files\REFPROP\defaults.prf"
+(File was not found or was an older version -- new file copied)
+
+ACTION: CreateDir: "C:\Program Files\REFPROP\fortran"
+
+ACTION: PrivateFile: "C:\Program Files\REFPROP\fortran\UTILITY.FOR"
+(File was not found or was an older version -- new file copied)
+
+ACTION: PrivateFile: "C:\Program Files\REFPROP\fortran\TRNSP.FOR"
+(File was not found or was an older version -- new file copied)
+
+ACTION: PrivateFile: "C:\Program Files\REFPROP\fortran\TRNS_VIS.FOR"
+(File was not found or was an older version -- new file copied)
+
+ACTION: PrivateFile: "C:\Program Files\REFPROP\fortran\TRNS_TCX.FOR"
+(File was not found or was an older version -- new file copied)
+
+ACTION: PrivateFile: "C:\Program Files\REFPROP\fortran\TRNS_ECS.FOR"
+(File was not found or was an older version -- new file copied)
+
+ACTION: PrivateFile: "C:\Program Files\REFPROP\fortran\SETUP2.FOR"
+(File was not found or was an older version -- new file copied)
+
+ACTION: PrivateFile: "C:\Program Files\REFPROP\fortran\SETUP.FOR"
+(File was not found or was an older version -- new file copied)
+
+ACTION: PrivateFile: "C:\Program Files\REFPROP\fortran\SAT_SUB.FOR"
+(File was not found or was an older version -- new file copied)
+
+ACTION: PrivateFile: "C:\Program Files\REFPROP\fortran\REALGAS.FOR"
+(File was not found or was an older version -- new file copied)
+
+ACTION: PrivateFile: "C:\Program Files\REFPROP\fortran\PROP_SUB.FOR"
+(File was not found or was an older version -- new file copied)
+
+ACTION: PrivateFile: "C:\Program Files\REFPROP\fortran\PASS_FTN.FOR"
+(File was not found or was an older version -- new file copied)
+
+ACTION: PrivateFile: "C:\Program Files\REFPROP\fortran\MIX_HMX.FOR"
+(File was not found or was an older version -- new file copied)
+
+ACTION: PrivateFile: "C:\Program Files\REFPROP\fortran\MIX_AGA8.FOR"
+(File was not found or was an older version -- new file copied)
+
+ACTION: PrivateFile: "C:\Program Files\REFPROP\fortran\MANUAL.TXT"
+(File was not found or was an older version -- new file copied)
+
+ACTION: PrivateFile: "C:\Program Files\REFPROP\fortran\IDEALGAS.FOR"
+(File was not found or was an older version -- new file copied)
+
+ACTION: PrivateFile: "C:\Program Files\REFPROP\fortran\FLSH_SUB.FOR"
+(File was not found or was an older version -- new file copied)
+
+ACTION: PrivateFile: "C:\Program Files\REFPROP\fortran\FLASH2.FOR"
+(File was not found or was an older version -- new file copied)
+
+ACTION: PrivateFile: "C:\Program Files\REFPROP\fortran\CORE_STN.FOR"
+(File was not found or was an older version -- new file copied)
+
+ACTION: PrivateFile: "C:\Program Files\REFPROP\fortran\CORE_QUI.FOR"
+(File was not found or was an older version -- new file copied)
+
+ACTION: PrivateFile: "C:\Program Files\REFPROP\fortran\CORE_PR.FOR"
+(File was not found or was an older version -- new file copied)
+
+ACTION: PrivateFile: "C:\Program Files\REFPROP\fortran\CORE_PH0.FOR"
+(File was not found or was an older version -- new file copied)
+
+ACTION: PrivateFile: "C:\Program Files\REFPROP\fortran\CORE_MLT.FOR"
+(File was not found or was an older version -- new file copied)
+
+ACTION: PrivateFile: "C:\Program Files\REFPROP\fortran\CORE_FEQ.FOR"
+(File was not found or was an older version -- new file copied)
+
+ACTION: PrivateFile: "C:\Program Files\REFPROP\fortran\CORE_ECS.FOR"
+(File was not found or was an older version -- new file copied)
+
+ACTION: PrivateFile: "C:\Program Files\REFPROP\fortran\CORE_DE.FOR"
+(File was not found or was an older version -- new file copied)
+
+ACTION: PrivateFile: "C:\Program Files\REFPROP\fortran\CORE_CPP.FOR"
+(File was not found or was an older version -- new file copied)
+
+ACTION: PrivateFile: "C:\Program Files\REFPROP\fortran\CORE_BWR.FOR"
+(File was not found or was an older version -- new file copied)
+
+ACTION: PrivateFile: "C:\Program Files\REFPROP\fortran\CORE_ANC.FOR"
+(File was not found or was an older version -- new file copied)
+
+ACTION: PrivateFile: "C:\Program Files\REFPROP\fortran\CMNS.FOR"
+(File was not found or was an older version -- new file copied)
+
+ACTION: CreateDir: "C:\Program Files\REFPROP\fluids"
+
+ACTION: PrivateFile: "C:\Program Files\REFPROP\fluids\R161.FLD"
+(File was not found or was an older version -- new file copied)
+
+ACTION: PrivateFile: "C:\Program Files\REFPROP\fluids\R1234ZE.FLD"
+(File was not found or was an older version -- new file copied)
+
+ACTION: PrivateFile: "C:\Program Files\REFPROP\fluids\R1234YF.FLD"
+(File was not found or was an older version -- new file copied)
+
+ACTION: PrivateFile: "C:\Program Files\REFPROP\fluids\MSTEARAT.FLD"
+(File was not found or was an older version -- new file copied)
+
+ACTION: PrivateFile: "C:\Program Files\REFPROP\fluids\MPALMITA.FLD"
+(File was not found or was an older version -- new file copied)
+
+ACTION: PrivateFile: "C:\Program Files\REFPROP\fluids\MOLEATE.FLD"
+(File was not found or was an older version -- new file copied)
+
+ACTION: PrivateFile: "C:\Program Files\REFPROP\fluids\MM.FLD"
+(File was not found or was an older version -- new file copied)
+
+ACTION: PrivateFile: "C:\Program Files\REFPROP\fluids\MLINOLEN.FLD"
+(File was not found or was an older version -- new file copied)
+
+ACTION: PrivateFile: "C:\Program Files\REFPROP\fluids\MLINOLEA.FLD"
+(File was not found or was an older version -- new file copied)
+
+ACTION: PrivateFile: "C:\Program Files\REFPROP\fluids\MDM.FLD"
+(File was not found or was an older version -- new file copied)
+
+ACTION: PrivateFile: "C:\Program Files\REFPROP\fluids\MD4M.FLD"
+(File was not found or was an older version -- new file copied)
+
+ACTION: PrivateFile: "C:\Program Files\REFPROP\fluids\MD3M.FLD"
+(File was not found or was an older version -- new file copied)
+
+ACTION: PrivateFile: "C:\Program Files\REFPROP\fluids\MD2M.FLD"
+(File was not found or was an older version -- new file copied)
+
+ACTION: PrivateFile: "C:\Program Files\REFPROP\fluids\D6.FLD"
+(File was not found or was an older version -- new file copied)
+
+ACTION: PrivateFile: "C:\Program Files\REFPROP\fluids\D5.FLD"
+(File was not found or was an older version -- new file copied)
+
+ACTION: PrivateFile: "C:\Program Files\REFPROP\fluids\D4.FLD"
+(File was not found or was an older version -- new file copied)
+
+ACTION: PrivateFile: "C:\Program Files\REFPROP\fluids\CYCLOPEN.FLD"
+(File was not found or was an older version -- new file copied)
+
+ACTION: PrivateFile: "C:\Program Files\REFPROP\fluids\C3CC6.FLD"
+(File was not found or was an older version -- new file copied)
+
+ACTION: PrivateFile: "C:\Program Files\REFPROP\fluids\C1CC6.FLD"
+(File was not found or was an older version -- new file copied)
+
+ACTION: PrivateFile: "C:\Program Files\REFPROP\fluids\XENON.FLD"
+(File was not found or was an older version -- new file copied)
+
+ACTION: PrivateFile: "C:\Program Files\REFPROP\fluids\WATER.FLD"
+(File was not found or was an older version -- new file copied)
+
+ACTION: PrivateFile: "C:\Program Files\REFPROP\fluids\TOLUENE.FLD"
+(File was not found or was an older version -- new file copied)
+
+ACTION: PrivateFile: "C:\Program Files\REFPROP\fluids\T2BUTENE.FLD"
+(File was not found or was an older version -- new file copied)
+
+ACTION: PrivateFile: "C:\Program Files\REFPROP\fluids\SO2.FLD"
+(File was not found or was an older version -- new file copied)
+
+ACTION: PrivateFile: "C:\Program Files\REFPROP\fluids\SF6.FLD"
+(File was not found or was an older version -- new file copied)
+
+ACTION: PrivateFile: "C:\Program Files\REFPROP\fluids\RC318.FLD"
+(File was not found or was an older version -- new file copied)
+
+ACTION: PrivateFile: "C:\Program Files\REFPROP\fluids\R507A.PPF"
+(File was not found or was an older version -- new file copied)
+
+ACTION: PrivateFile: "C:\Program Files\REFPROP\fluids\R410A.PPF"
+(File was not found or was an older version -- new file copied)
+
+ACTION: PrivateFile: "C:\Program Files\REFPROP\fluids\R41.FLD"
+(File was not found or was an older version -- new file copied)
+
+ACTION: PrivateFile: "C:\Program Files\REFPROP\fluids\R407C.PPF"
+(File was not found or was an older version -- new file copied)
+
+ACTION: PrivateFile: "C:\Program Files\REFPROP\fluids\R404A.PPF"
+(File was not found or was an older version -- new file copied)
+
+ACTION: PrivateFile: "C:\Program Files\REFPROP\fluids\R365MFC.FLD"
+(File was not found or was an older version -- new file copied)
+
+ACTION: PrivateFile: "C:\Program Files\REFPROP\fluids\R32.FLD"
+(File was not found or was an older version -- new file copied)
+
+ACTION: PrivateFile: "C:\Program Files\REFPROP\fluids\R245FA.FLD"
+(File was not found or was an older version -- new file copied)
+
+ACTION: PrivateFile: "C:\Program Files\REFPROP\fluids\R245CA.FLD"
+(File was not found or was an older version -- new file copied)
+
+ACTION: PrivateFile: "C:\Program Files\REFPROP\fluids\R236FA.FLD"
+(File was not found or was an older version -- new file copied)
+
+ACTION: PrivateFile: "C:\Program Files\REFPROP\fluids\R236EA.FLD"
+(File was not found or was an older version -- new file copied)
+
+ACTION: PrivateFile: "C:\Program Files\REFPROP\fluids\R23.FLD"
+(File was not found or was an older version -- new file copied)
+
+ACTION: PrivateFile: "C:\Program Files\REFPROP\fluids\R227EA.FLD"
+(File was not found or was an older version -- new file copied)
+
+ACTION: PrivateFile: "C:\Program Files\REFPROP\fluids\R22.FLD"
+(File was not found or was an older version -- new file copied)
+
+ACTION: PrivateFile: "C:\Program Files\REFPROP\fluids\R218.FLD"
+(File was not found or was an older version -- new file copied)
+
+ACTION: PrivateFile: "C:\Program Files\REFPROP\fluids\R21.FLD"
+(File was not found or was an older version -- new file copied)
+
+ACTION: PrivateFile: "C:\Program Files\REFPROP\fluids\R152A.FLD"
+(File was not found or was an older version -- new file copied)
+
+ACTION: PrivateFile: "C:\Program Files\REFPROP\fluids\R143A.FLD"
+(File was not found or was an older version -- new file copied)
+
+ACTION: PrivateFile: "C:\Program Files\REFPROP\fluids\R142B.FLD"
+(File was not found or was an older version -- new file copied)
+
+ACTION: PrivateFile: "C:\Program Files\REFPROP\fluids\R141B.FLD"
+(File was not found or was an older version -- new file copied)
+
+ACTION: PrivateFile: "C:\Program Files\REFPROP\fluids\R14.FLD"
+(File was not found or was an older version -- new file copied)
+
+ACTION: PrivateFile: "C:\Program Files\REFPROP\fluids\R134A.FLD"
+(File was not found or was an older version -- new file copied)
+
+ACTION: PrivateFile: "C:\Program Files\REFPROP\fluids\R13.FLD"
+(File was not found or was an older version -- new file copied)
+
+ACTION: PrivateFile: "C:\Program Files\REFPROP\fluids\R125.FLD"
+(File was not found or was an older version -- new file copied)
+
+ACTION: PrivateFile: "C:\Program Files\REFPROP\fluids\R124.FLD"
+(File was not found or was an older version -- new file copied)
+
+ACTION: PrivateFile: "C:\Program Files\REFPROP\fluids\R123.FLD"
+(File was not found or was an older version -- new file copied)
+
+ACTION: PrivateFile: "C:\Program Files\REFPROP\fluids\R12.FLD"
+(File was not found or was an older version -- new file copied)
+
+ACTION: PrivateFile: "C:\Program Files\REFPROP\fluids\R116.FLD"
+(File was not found or was an older version -- new file copied)
+
+ACTION: PrivateFile: "C:\Program Files\REFPROP\fluids\R115.FLD"
+(File was not found or was an older version -- new file copied)
+
+ACTION: PrivateFile: "C:\Program Files\REFPROP\fluids\R114.FLD"
+(File was not found or was an older version -- new file copied)
+
+ACTION: PrivateFile: "C:\Program Files\REFPROP\fluids\R113.FLD"
+(File was not found or was an older version -- new file copied)
+
+ACTION: PrivateFile: "C:\Program Files\REFPROP\fluids\R11.FLD"
+(File was not found or was an older version -- new file copied)
+
+ACTION: PrivateFile: "C:\Program Files\REFPROP\fluids\PROPYNE.FLD"
+(File was not found or was an older version -- new file copied)
+
+ACTION: PrivateFile: "C:\Program Files\REFPROP\fluids\PROPYLEN.FLD"
+(File was not found or was an older version -- new file copied)
+
+ACTION: PrivateFile: "C:\Program Files\REFPROP\fluids\PROPANE.FLD"
+(File was not found or was an older version -- new file copied)
+
+ACTION: PrivateFile: "C:\Program Files\REFPROP\PREFS"
+(File was not found or was an older version -- new file copied)
+
+ACTION: PrivateFile: "C:\Program Files\REFPROP\fluids\PENTANE.FLD"
+(File was not found or was an older version -- new file copied)
+
+ACTION: PrivateFile: "C:\Program Files\REFPROP\fluids\PARAHYD.FLD"
+(File was not found or was an older version -- new file copied)
+
+ACTION: PrivateFile: "C:\Program Files\REFPROP\fluids\OXYGEN.FLD"
+(File was not found or was an older version -- new file copied)
+
+ACTION: PrivateFile: "C:\Program Files\REFPROP\fluids\ORTHOHYD.FLD"
+(File was not found or was an older version -- new file copied)
+
+ACTION: PrivateFile: "C:\Program Files\REFPROP\fluids\OCTANE.FLD"
+(File was not found or was an older version -- new file copied)
+
+ACTION: PrivateFile: "C:\Program Files\REFPROP\fluids\NONANE.FLD"
+(File was not found or was an older version -- new file copied)
+
+ACTION: PrivateFile: "C:\Program Files\REFPROP\fluids\NITROGEN.FLD"
+(File was not found or was an older version -- new file copied)
+
+ACTION: PrivateFile: "C:\Program Files\REFPROP\fluids\NF3.FLD"
+(File was not found or was an older version -- new file copied)
+
+ACTION: PrivateFile: "C:\Program Files\REFPROP\fluids\NEOPENTN.FLD"
+(File was not found or was an older version -- new file copied)
+
+ACTION: PrivateFile: "C:\Program Files\REFPROP\fluids\NEON.FLD"
+(File was not found or was an older version -- new file copied)
+
+ACTION: PrivateFile: "C:\Program Files\REFPROP\fluids\N2O.FLD"
+(File was not found or was an older version -- new file copied)
+
+ACTION: PrivateFile: "C:\Program Files\REFPROP\fluids\METHANOL.FLD"
+(File was not found or was an older version -- new file copied)
+
+ACTION: PrivateFile: "C:\Program Files\REFPROP\fluids\METHANE.FLD"
+(File was not found or was an older version -- new file copied)
+
+ACTION: PrivateFile: "C:\Program Files\REFPROP\fluids\KRYPTON.FLD"
+(File was not found or was an older version -- new file copied)
+
+ACTION: PrivateFile: "C:\Program Files\REFPROP\fluids\ISOBUTAN.FLD"
+(File was not found or was an older version -- new file copied)
+
+ACTION: PrivateFile: "C:\Program Files\REFPROP\fluids\IPENTANE.FLD"
+(File was not found or was an older version -- new file copied)
+
+ACTION: PrivateFile: "C:\Program Files\REFPROP\fluids\IHEXANE.FLD"
+(File was not found or was an older version -- new file copied)
+
+ACTION: PrivateFile: "C:\Program Files\REFPROP\fluids\IBUTENE.FLD"
+(File was not found or was an older version -- new file copied)
+
+ACTION: PrivateFile: "C:\Program Files\REFPROP\fluids\HYDROGEN.FLD"
+(File was not found or was an older version -- new file copied)
+
+ACTION: PrivateFile: "C:\Program Files\REFPROP\fluids\HMX.BNC"
+(File was not found or was an older version -- new file copied)
+
+ACTION: PrivateFile: "C:\Program Files\REFPROP\fluids\HEXANE.FLD"
+(File was not found or was an older version -- new file copied)
+
+ACTION: PrivateFile: "C:\Program Files\REFPROP\fluids\HEPTANE.FLD"
+(File was not found or was an older version -- new file copied)
+
+ACTION: PrivateFile: "C:\Program Files\REFPROP\fluids\HELIUM.FLD"
+(File was not found or was an older version -- new file copied)
+
+ACTION: PrivateFile: "C:\Program Files\REFPROP\fluids\H2S.FLD"
+(File was not found or was an older version -- new file copied)
+
+ACTION: PrivateFile: "C:\Program Files\REFPROP\fluids\FLUORINE.FLD"
+(File was not found or was an older version -- new file copied)
+
+ACTION: PrivateFile: "C:\Program Files\REFPROP\fluids\ETHYLENE.FLD"
+(File was not found or was an older version -- new file copied)
+
+ACTION: PrivateFile: "C:\Program Files\REFPROP\fluids\ETHANOL.FLD"
+(File was not found or was an older version -- new file copied)
+
+ACTION: PrivateFile: "C:\Program Files\REFPROP\fluids\ETHANE.FLD"
+(File was not found or was an older version -- new file copied)
+
+ACTION: PrivateFile: "C:\Program Files\REFPROP\fluids\DMC.FLD"
+(File was not found or was an older version -- new file copied)
+
+ACTION: PrivateFile: "C:\Program Files\REFPROP\fluids\DME.FLD"
+(File was not found or was an older version -- new file copied)
+
+ACTION: PrivateFile: "C:\Program Files\REFPROP\fluids\DECANE.FLD"
+(File was not found or was an older version -- new file copied)
+
+ACTION: PrivateFile: "C:\Program Files\REFPROP\fluids\D2O.FLD"
+(File was not found or was an older version -- new file copied)
+
+ACTION: PrivateFile: "C:\Program Files\REFPROP\fluids\D2.FLD"
+(File was not found or was an older version -- new file copied)
+
+ACTION: PrivateFile: "C:\Program Files\REFPROP\fluids\CYCLOPRO.FLD"
+(File was not found or was an older version -- new file copied)
+
+ACTION: PrivateFile: "C:\Program Files\REFPROP\fluids\CYCLOHEX.FLD"
+(File was not found or was an older version -- new file copied)
+
+ACTION: PrivateFile: "C:\Program Files\REFPROP\fluids\COS.FLD"
+(File was not found or was an older version -- new file copied)
+
+ACTION: PrivateFile: "C:\Program Files\REFPROP\fluids\CO2.FLD"
+(File was not found or was an older version -- new file copied)
+
+ACTION: PrivateFile: "C:\Program Files\REFPROP\fluids\CO.FLD"
+(File was not found or was an older version -- new file copied)
+
+ACTION: PrivateFile: "C:\Program Files\REFPROP\fluids\CF3I.FLD"
+(File was not found or was an older version -- new file copied)
+
+ACTION: PrivateFile: "C:\Program Files\REFPROP\fluids\C5F12.FLD"
+(File was not found or was an older version -- new file copied)
+
+ACTION: PrivateFile: "C:\Program Files\REFPROP\fluids\C4F10.FLD"
+(File was not found or was an older version -- new file copied)
+
+ACTION: PrivateFile: "C:\Program Files\REFPROP\fluids\C2BUTENE.FLD"
+(File was not found or was an older version -- new file copied)
+
+ACTION: PrivateFile: "C:\Program Files\REFPROP\fluids\C12.FLD"
+(File was not found or was an older version -- new file copied)
+
+ACTION: PrivateFile: "C:\Program Files\REFPROP\fluids\BUTANE.FLD"
+(File was not found or was an older version -- new file copied)
+
+ACTION: PrivateFile: "C:\Program Files\REFPROP\fluids\BENZENE.FLD"
+(File was not found or was an older version -- new file copied)
+
+ACTION: PrivateFile: "C:\Program Files\REFPROP\fluids\ARGON.FLD"
+(File was not found or was an older version -- new file copied)
+
+ACTION: PrivateFile: "C:\Program Files\REFPROP\fluids\AMMONIA.FLD"
+(File was not found or was an older version -- new file copied)
+
+ACTION: PrivateFile: "C:\Program Files\REFPROP\fluids\AIR.PPF"
+(File was not found or was an older version -- new file copied)
+
+ACTION: PrivateFile: "C:\Program Files\REFPROP\fluids\ACETONE.FLD"
+(File was not found or was an older version -- new file copied)
+
+ACTION: PrivateFile: "C:\Program Files\REFPROP\fluids\1BUTENE.FLD"
+(File was not found or was an older version -- new file copied)
+
+ACTION: SharedFile: "C:\WINDOWS\system32\hh.exe"
+(File was not found or was an older version -- new file copied)
+
+ACTION: SharedFile: "C:\WINDOWS\system32\itircl.dll"
+(File was not found or was an older version -- new file copied)
+
+ACTION: SharedFile: "C:\WINDOWS\system32\itss.dll"
+(File was not found or was an older version -- new file copied)
+
+ACTION: SharedFile: "C:\WINDOWS\system32\hhctrl.ocx"
+(File was not found or was an older version -- new file copied)
+
+ACTION: PrivateFile: "C:\Program Files\REFPROP\REFPROP.CHM"
+(File was not found or was an older version -- new file copied)
+
+ACTION: SharedFile: "C:\WINDOWS\system32\MSCOMCTL.OCX"
+(File was not found or was an older version -- new file copied)
+
+ACTION: SharedFile: "C:\WINDOWS\system32\comdlg32.ocx"
+(File was not found or was an older version -- new file copied)
+
+ACTION: SharedFile: "C:\WINDOWS\system32\msstdfmt.dll"
+(File was not found or was an older version -- new file copied)
+
+ACTION: SharedFile: "C:\WINDOWS\system32\MShflxgd.ocx"
+(File was not found or was an older version -- new file copied)
+
+ACTION: PrivateFile: "C:\Program Files\REFPROP\refprop.dll"
+(File was not found or was an older version -- new file copied)
+
+ACTION: PrivateFile: "C:\Program Files\REFPROP\refprop.exe"
+(File was not found or was an older version -- new file copied)
+
+ACTION: DllSelfRegister: "C:\WINDOWS\system32\itircl.dll"
+
+ACTION: DllSelfRegister: "C:\WINDOWS\system32\itss.dll"
+
+ACTION: DllSelfRegister: "C:\WINDOWS\system32\hhctrl.ocx"
+
+ACTION: DllSelfRegister: "C:\WINDOWS\system32\MSCOMCTL.OCX"
+
+ACTION: DllSelfRegister: "C:\WINDOWS\system32\comdlg32.ocx"
+
+ACTION: DllSelfRegister: "C:\WINDOWS\system32\msstdfmt.dll"
+
+ACTION: DllSelfRegister: "C:\WINDOWS\system32\MShflxgd.ocx"
+
+ACTION: ShellLink: "REFPROP", "REFPROP"
+
+ACTION: ShellLink: "REFPROP", "Refprop.XLS"
+
+ACTION: RegKey: "HKEY_LOCAL_MACHINE\SOFTWARE\Microsoft\Windows\CurrentVersion", "App Paths\refprop.exe"
+
+ACTION: RegValue: "HKEY_LOCAL_MACHINE\SOFTWARE\Microsoft\Windows\CurrentVersion\App Paths\refprop.exe", ""
+

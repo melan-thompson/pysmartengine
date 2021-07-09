@@ -1,0 +1,24 @@
+add_library(
+  Boundaries
+  BoundaryFunctions.cpp
+  TCCCilindro.cpp
+  TCCCompresor.cpp
+  TCCCompresorVolumetrico.cpp
+  TCCDeposito.cpp
+  TCCDescargaExtremoAbierto.cpp
+  TCCEntradaCompresor.cpp
+  TCCExternalConnection.cpp
+  TCCExternalConnectionVol.cpp
+  TCCExtremoAnecoico.cpp
+  TCCExtremoCerrado.cpp
+  TCCExtremoInyeccion.cpp
+  TCCPerdidadePresion.cpp
+  TCCPreVble.cpp
+  TCCPulso.cpp
+  TCCRamificacion.cpp
+  TCCUnionEntreDepositos.cpp
+  TCCUnionEntreTubos.cpp
+#   TCCValvula.cpp
+  TCFDConnection.cpp
+  TCondicionContorno.cpp
+  TEntradaPulso.cpp)

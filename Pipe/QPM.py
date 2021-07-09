@@ -1,5 +1,7 @@
 import sys
 sys.path.append("..")
+sys.path.append("../Properties of working fluids")
+
 def openEnd(p, p0=1.e5, T0=300, R=None, k=None):
     from GasProperty import k_Justi, Rg
     from math import sqrt
@@ -10,9 +12,9 @@ def openEnd(p, p0=1.e5, T0=300, R=None, k=None):
     return sqrt(2 * k * R * T0 / (k - 1) * (1 - pow(p / p0, (k - 1) / k)))
 
 
+
 def openEnd2(u, p0=1.e5, T0=300, R=None, k=None):
     from GasProperty import k_Justi, Rg
-    from math import sqrt
     if R is None:
         R = Rg()
     if k is None:
@@ -20,6 +22,8 @@ def openEnd2(u, p0=1.e5, T0=300, R=None, k=None):
     temp = 2 * k * R * T0 / (k - 1)
     temp2 = 1 - u ** 2 / temp
     return p0 * pow(temp2, k / (k - 1))
+
+
 
 
 def nozzle(p, p0=1.e5, T0=300, phi=0.5, R=None, k=None):
@@ -34,6 +38,14 @@ def nozzle(p, p0=1.e5, T0=300, phi=0.5, R=None, k=None):
     temp3 = 1 / pow(phi, 2) * pow(p / p0, 2. / k) - 1
 
     return sqrt(temp * temp2 / temp3)
+
+if __name__ == "__main__":
+    from ArrayTable import ArrayTable
+    C = ArrayTable(2, 0)
+    temp = C.plotfun(nozzle, 1.e5, 5.e5)
+    temp.setTableHeader(["pressure", "velocity"])
+    temp.setTableUnit(["Pa", "m/s"])
+    temp.plot(0, 1)
     # return sqrt(temp * temp2 * temp3)
 
 def nozzleUn(pi,k=1.4,phi=0.5):

@@ -1,10 +1,6 @@
 {
   "engine type": "WP7",
-  "bore,mm": 108,
-  "stroke,mm": 130,
-  "connecting rod length,mm":209,
-  "compression ratio": 18,
-  "number of cylinders": 6,
+
   "data file": "../Data/机型数据.xlsx",
 
   "environment pressure,Pa": 101325,

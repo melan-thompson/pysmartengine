@@ -1,0 +1,14 @@
+add_library(
+  Connections
+  TCDExterno.cpp
+  TCDFijo.cpp
+  TDiscoRotativo.cpp
+  TEstatorTurbina.cpp
+  TLamina.cpp
+  TLumbrera.cpp
+  TMariposa.cpp
+  TRotorTurbina.cpp
+  TTipoValvula.cpp
+  TValvula4T.cpp
+  TValvulaContr.cpp
+  TWasteGate.cpp)
