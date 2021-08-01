@@ -580,6 +580,38 @@ class ArrayTable:
         # ani.save("temp12.gif", writer="pillow",fps=30)
         plt.show()
 
+    def animationCols(self, _coly=1, _colx=0):
+        import numpy as np
+        import matplotlib.pyplot as plt
+        from matplotlib.animation import FuncAnimation
+        fig = plt.figure(0, figsize=(10, 10))
+        ax = fig.add_subplot(1, 1, 1)
+        # fig, ax = plt.subplots()
+        ln, = ax.plot([], [], 'b-', animated=False)
+        plt.xlabel(self.table[_colx].ColName + "(" + self.table[_colx].ColUnit + ")")
+        plt.ylabel(self.table[_coly].ColName + "(" + self.table[_coly].ColUnit + ")")
+        plt.tight_layout()
+
+        def init():
+            ax.set_xlim(0.8 * min(self.table[_colx].data), 1.05 * max(self.table[_colx].data))
+            ax.set_ylim(0.8 * min(self.table[_coly].data), 1.05 * max(self.table[_coly].data))
+            ax.set_ylim(0, 1.05)
+            return ln,
+            # ax.set_xlim(0, 2 * np.pi)
+            # ax.set_ylim(-1, 1)
+            # return ln,
+
+        def update(i):
+            # ln.set_data(range(i),range(i))
+            ln.set_data(self.table[_colx].data, self.table[i].data)
+            # print(i)
+            return ln,
+
+        ani = FuncAnimation(fig, update, frames=np.arange(1, self.col), interval=10,
+                            init_func=init, blit=True, repeat=False)
+        ani.save("temp12.gif", writer="pillow", fps=2)
+        plt.show()
+
     def pie(self, _row):
         head, unit = self.getHeader()
         data = self.getOneRecord(_row)
@@ -947,6 +979,51 @@ class ArrayTable:
             if key is not None:
                 self.table[i].ColName = key
 
+    # 高斯回归，x为预测向量，xcolumn为训练集x所在的行，ycolumn为训练集的y，kerneltype和函数的类型
+    # 当trained=True模型已经训练完成，可以直接预测，当trained==False则先训练函数
+    def GPR(self,x, xcolumn=[0], ycolumn=1, kerneltype="Matern", trained=True):
+        from sklearn.preprocessing import MinMaxScaler
+        import numpy as np
+        Xtrain = np.array([self.table[i].data for i in xcolumn]).T
+        Ytrain = np.array(self.table[ycolumn].data)[:, np.newaxis]
+
+        # 将训练集归一化到[0.01,0.99]
+        xscaler = MinMaxScaler(feature_range=(0.01, 0.99))
+        yscaler = MinMaxScaler(feature_range=(0.01, 0.99))
+        Xfit = xscaler.fit_transform(Xtrain)
+        Yfit = yscaler.fit_transform(Ytrain)
+
+        # 如果训练未完成，则训练
+        if trained == False:
+            from sklearn.gaussian_process import GaussianProcessRegressor
+            if kerneltype == "Matern":
+                from sklearn.gaussian_process.kernels import Matern
+                kernel = Matern(length_scale=1.0, length_scale_bounds=(0.01, 0.99))
+            if kerneltype=="RBF":
+                from sklearn.gaussian_process.kernels import RBF
+                kernel = RBF(length_scale=1.0, length_scale_bounds=(0.01, 0.99))
+            if kerneltype=="DotProduct":
+                from sklearn.gaussian_process.kernels import DotProduct
+                kernel=DotProduct(sigma_0=1.0, sigma_0_bounds=(0.01, 0.99)) ** 2
+            self.gp = GaussianProcessRegressor(kernel=kernel)
+            self.gp.fit(Xfit, Yfit)
+
+        # 获取每一个属性的最大最小值
+        minn = [min(each) for each in Xtrain.T]
+        maxx = [max(each) for each in Xtrain.T]
+
+        # 处理预测向量，使之归一化到区间
+        xx = []
+        for i in range(len(x)):
+            xx.append(0.01 + (x[i] - minn[i]) / (maxx[i] - minn[i]) * (0.99 - 0.01))
+        xx = np.array([xx])
+
+        # 预测
+        y_mean, y_std = self.gp.predict(xx, return_std=True)
+
+        # 还原y的真实值
+        return yscaler.inverse_transform(y_mean)
+
     def exchangeRow(self, i, j):
         temp = self.getOneRecord(i)
         for k in range(len(temp)):
@@ -984,7 +1061,7 @@ class ArrayTable:
 
 
 if __name__ == "__main__":
+    import sys
     T = ArrayTable()
-    T.readParameters("output.csv")
-    print(T.searchPara("有效功率"))
-    T.show()
+    T.readCSVFile("EnergyBalance.csv")
+    print(T.GPR([180,1600,12.93],[1,4,5],9,trained=False))

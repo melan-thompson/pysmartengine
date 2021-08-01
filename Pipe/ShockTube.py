@@ -87,7 +87,7 @@ class Node:
         result[2][0] = -k * U[2] * U[1] / (U[0] ** 2) + (k - 1.) * (U[1] ** 3) / (U[0] ** 3)
         result[2][1] = k * U[2] / U[0] - (k - 1.) * 3. / 2. * U[1] ** 2 / U[0] ** 2
         result[2][2] = k * U[1] / U[0]
-        import numpy as np
+
         self.J = result
         self.Jeigenvalue, self.Jeigenvector = np.linalg.eig(self.J)
         return result
@@ -429,7 +429,7 @@ class ShockTube:
 
         ani = FuncAnimation(fig, update, frames=np.linspace(1.e-12, t, 90), interval=100,
                             init_func=init, blit=True, repeat=False)
-        ani.save("shocktube.gif", writer="pillow")
+        # ani.save("shocktube.gif", writer="pillow")
         plt.show()
 
     # if pbar<0:
@@ -497,6 +497,7 @@ class ShockTube:
 
 
 if __name__=="__main__":
+    # laxWendroff1step(0.6e-3,[1,1200,0.5e6],[0,300,0.1e6]).plot(1)
     ShockTube([1,1200,0.5e6],[0,300,0.1e6]).AnalyticalSolutionAnimation(0.6e-3)
 
 

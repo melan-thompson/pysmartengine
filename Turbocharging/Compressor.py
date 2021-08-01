@@ -1,3 +1,7 @@
+import sys
+
+sys.path.append("..")
+
 from FluidProperties.GasProperty import *
 
 
@@ -39,6 +43,13 @@ def TAfterCompressor(T0, pik, etak=1, tau=1):
 
 
 def TAfterTurbine(Tt, pit, etat=1):
+    """
+    计算涡轮后温度
+    :param Tt: 涡轮前温度,K
+    :param pit: 涡轮膨胀比
+    :param etat: 涡轮等熵效率
+    :return: 涡轮后温度
+    """
     k = k_exhaust_gu(Tt)
     return Tt * (1 - etat * (1 - pow(pit, -(k - 1) / k)))
 
@@ -82,7 +93,21 @@ def piK(Tt, pit, etat, etak, T0=273.15 + 20, air_fuel_ratio=23.85, ma=1, me=None
     return result
 
 
+def ETpiK(power, etak=0.5, Tbefore=273.15):
+    pass
+
+
 def piT(pik, etatk=1, Tt=600, T0=273.15 + 20, air_fuel_ratio=23.85):
+    # \phi\frac{{{c_{pa}}{T_0}\left( {{\pi _k}^{\frac{{\gamma  - 1}}{\gamma }} - 1} \right)}}{{{\eta _k}}} = \left( {\phi  + 1} \right){c_{pe}}{T_t}\left( {1 - {\pi _t}^{ - \frac{{\gamma  - 1}}{\gamma }}} \right){\eta _t}{\eta _m}
+    """
+    计算涡轮膨胀比
+    :param pik: 压气机压比
+    :param etatk: 涡轮增压器总效率
+    :param Tt: 涡轮前温度,K
+    :param T0: 压气机前温度,K
+    :param air_fuel_ratio: 空燃比
+    :return: 涡轮膨胀比
+    """
     gammak = k_Justi(T0)
     gammat = k_exhaust_gu(Tt)
     temp = (cp_Justi(T0) * T0 * air_fuel_ratio) / ((air_fuel_ratio + 1) * cp_exhaust_gu(Tt) * Tt * etatk)
@@ -91,17 +116,21 @@ def piT(pik, etatk=1, Tt=600, T0=273.15 + 20, air_fuel_ratio=23.85):
 
 
 class Compressor:
-    def __init__(self, mapfile, Tref=298, Pref=101325):
-        from pandas import read_excel
-        self.map = read_excel(mapfile)
+    def __init__(self, mapfile, Tref=298, Pref=101325, MapType="real",order=2):
+        from pandas import read_excel,to_numeric,DataFrame
+        self.map = read_excel(mapfile).apply(to_numeric)
         self.Tref = Tref
         self.Pref = Pref
+        self.intefunorder=order
+
+        # 等效率表格
+        self.effmap=DataFrame(columns=self.map.columns)
 
         # 获取表头
         self.headers = list(self.map.columns)
 
         # 对转速、流量进行排序
-        self.map.sort_values(by=[self.headers[0], self.headers[1]])
+        self.map=self.map.sort_values(by=[self.headers[0], self.headers[1]])
 
         # 按照转速分组
         self.group = self.map.groupby(self.headers[0])
@@ -111,13 +140,35 @@ class Compressor:
         for each, ii in self.group:
             self.speeds.append(each)
 
-    def plot(self, showlegend=False, hightlight=None):
-        import matplotlib.pyplot as plt
-        fig, ax = plt.subplots(2, 1, figsize=(10, 10))
+        # 加入插值函数{n:[fmass,feff]}
+        import scipy.interpolate as inte
+        self.intefuns={}
         for each in self.speeds:
-            ax[1] = self.group.get_group(each).plot(x=self.headers[1], y=self.headers[2],
-                                                    label="speed=" + str(each), ax=ax[1], marker="x")
-            ax[0] = self.group.get_group(each).plot(x=self.headers[1], y=self.headers[3], label="speed=" + str(each),
+            fmass=inte.interp1d(self.group.get_group(each)[self.headers[1]],self.group.get_group(each)[self.headers[2]],kind=order)
+            feff=inte.interp1d(self.group.get_group(each)[self.headers[1]],self.group.get_group(each)[self.headers[3]],kind=order)
+            funs={"fmass":fmass,"feff":feff}
+            self.intefuns[each]=funs
+
+
+    def plot(self, showlegend=True, hightlight=None,order=2):
+        import matplotlib.pyplot as plt
+        from numpy import linspace
+        fig, ax = plt.subplots(2, 1, figsize=(10, 10))
+        import scipy.interpolate as inte
+        if order>=2:
+            for each in self.speeds:
+                xx=linspace(min(self.group.get_group(each)[self.headers[1]]),max(self.group.get_group(each)[self.headers[1]]))
+                f1=inte.interp1d(self.group.get_group(each)[self.headers[1]],self.group.get_group(each)[self.headers[2]],kind=order)
+                f2 = inte.interp1d(self.group.get_group(each)[self.headers[1]],
+                                   self.group.get_group(each)[self.headers[3]], kind=order)
+                ax[0].plot(xx, f2(xx), label="speed=" + str(each))
+                ax[1].plot(xx,f1(xx),label="speed=" + str(each))
+
+        else:
+            for each in self.speeds:
+                ax[1] = self.group.get_group(each).plot(x=self.headers[1], y=self.headers[2],
+                                                        label="speed=" + str(each), ax=ax[1], marker="x")
+                ax[0] = self.group.get_group(each).plot(x=self.headers[1], y=self.headers[3], label="speed=" + str(each),
                                                     ax=ax[0], marker="x")
         # surge line
         xx = [];
@@ -125,7 +176,10 @@ class Compressor:
         for each in self.speeds:
             xx.append(self.group.get_group(each).iloc[0, 1])
             yy.append(self.group.get_group(each).iloc[0, 2])
-        ax[1].plot(xx, yy, "r--")
+        f3=inte.interp1d(xx,yy,kind=order)
+        # print(f3.x)
+        xx2=linspace(min(xx), max(xx),100)
+        ax[1].plot(xx2,f3(xx2), "r--")
 
         # choke flow line
         xx1 = [];
@@ -133,25 +187,40 @@ class Compressor:
         for each in self.speeds:
             xx1.append(self.group.get_group(each).iloc[-1, 1])
             yy1.append(self.group.get_group(each).iloc[-1, 2])
-        ax[1].plot(xx1, yy1, "r--")
+        f4=inte.interp1d(xx1,yy1,kind=order)
+        xx3=linspace(min(xx1),max(xx1),100)
+        ax[1].plot(xx3, f4(xx3), "r--")
 
         # 最大效率线
-        # xx2=[]
-        # yy2=[]
-        # zz2=[]
-        # for each in self.speeds:
-        #     table=self.group.get_group(each)
-        #     print(type(table))
-        #     indexx=table.idxmax()[3]
-        #     print(indexx)
-        #     xx2.append(self.group.get_group(each).loc[indexx][1])
-        #     yy2.append(self.group.get_group(each).loc[indexx][2])
-        #     # zz2.append(self.map.iloc[indexx,3])
-        # # ax[0].plot(xx2,zz2,'r--')
-        # ax[1].plot(xx2,yy2,'r--')
+        xx2=[]
+        yy2=[]
+        zz2=[]
+        for each in self.speeds:
+            table=self.group.get_group(each)
+            indexx=table.idxmax()[3]
+            xx2.append(self.group.get_group(each).loc[indexx][1])
+            yy2.append(self.group.get_group(each).loc[indexx][2])
+            zz2.append(self.group.get_group(each).loc[indexx][3])
+        # f5=inte.interp1d(xx2,yy2,kind=order)
+        # xx3=linspace(min(self.map[self.map.columns[1]]),max(self.map[self.map.columns[1]]),100)
+        # print(xx3)
+        ax[0].plot(xx2,zz2,'r-.')
+        ax[1].plot(xx2,yy2,'r-.')
 
         ax[0].set_ylabel(self.headers[3])
         ax[1].set_ylabel(self.headers[2])
+
+        # 等效率线
+        # print(self.effmap)
+        x=self.effmap[self.headers[1]]
+        y=self.effmap[self.headers[2]]
+        # import numpy as np
+        # x = np.r_[x, x[0]]
+        # y = np.r_[y, y[0]]
+        # from scipy import interpolate
+        # tck, u = interpolate.splprep([x, y], s=0, per=True)
+        # xi, yi = interpolate.splev(np.linspace(0, 1, 1000), tck)
+        ax[1].plot(x,y)
 
         ax[1].annotate('surge line',
                        xy=(xx[(len(xx) // 2)], yy[(len(xx) // 2)]), xycoords='data',
@@ -180,7 +249,7 @@ class Compressor:
             raise Exception("interpolate out of range")
         import pandas as pd
         newgroup = pd.DataFrame(index=self.group.get_group(self.speeds[0]).index,
-                                columns=self.group.get_group(self.speeds[0]).columns)
+                                columns=self.group.get_group(self.speeds[0]).columns,dtype=float)
         newgroup["corrected speed,RPM"] = speed
 
         for i in range(len(self.speeds)):
@@ -195,10 +264,23 @@ class Compressor:
                 temp2 = self.group.get_group(speedright).iloc[j, k]
                 newgroup.loc[j, self.headers[k]] = twoPointInterpolate(speed, [speedleft, speedright], [temp1, temp2])
 
+        # 增加插值函数
+        import scipy.interpolate as inte
+        fmass = inte.interp1d(newgroup[self.headers[1]], newgroup[self.headers[2]],
+                              kind=self.intefunorder)
+        feff = inte.interp1d(newgroup[self.headers[1]], newgroup[self.headers[3]],
+                             kind=self.intefunorder)
+        funs = {"fmass": fmass, "feff": feff}
+        self.intefuns[speed] = funs
+
         self.map = self.map.append(newgroup)
 
         # 对转速排序
-        self.map.sort_values(by=[self.headers[0], self.headers[1]])
+        self.map=self.map.sort_values(by=[self.headers[0], self.headers[1]])
+
+        from pandas import to_numeric
+        # 重置索引,转化为数值
+        self.map=self.map.reset_index(drop=True)
 
         # 分组
         self.group = self.map.groupby(self.headers[0])
@@ -222,31 +304,172 @@ class Compressor:
 
         # 压比
         temp = self.group.get_group(speed)[self.headers[2]]
+        print("maximum pressure ratio={},minimum pressure ratio={} at speed {}".format(max(temp), min(temp), speed))
+
         # 流量
         temp2 = self.group.get_group(speed)[self.headers[1]]
 
         # 效率
         temp3 = self.group.get_group(speed)[self.headers[3]]
 
+        if pik < min(temp):
+            raise Exception("pressure ratio is too small while calculating mass flow rate")
+        elif pik > max(temp):
+            raise Exception("pressure ratio is too big while calculating mass flow rate")
+
         for i in range(len(temp)):
-            if pik < min(temp):
-                raise Exception("pressure ratio is too small while calculating mass flow rate")
-            elif pik > max(temp):
-                raise Exception("pressure ratio is too big while calculating mass flow rate")
-            if temp[i] < pik:
+            if temp[i] == pik:
+                massflowrate=temp2[i]
+                # efficiency=temp3[i]
+                break
+            elif temp[i] < pik:
                 massflowrate = twoPointInterpolate(pik, [temp[i - 1], temp[i]], [temp2[i - 1], temp2[i]])
                 break
 
         for j in range(len(temp)):
+            if massflowrate == temp2[j]:
+                efficiency=temp3[j]
+                break
             if massflowrate < temp2[j]:
-                print(j)
+                # print(j)
                 efficiency = twoPointInterpolate(massflowrate, [temp2[j - 1], temp2[j]], [temp3[j - 1], temp3[j]])
                 break
-        from math import sqrt
-        print("Speed={},pressure ratio={},mass flow rate={}kg/s,efficiency={}".format(speed * sqrt(self.Tref), pik,
-                                                                                      massflowrate * self.Pref / sqrt(
-                                                                                          self.Tref), efficiency))
-        return massflowrate
+        # from math import sqrt
+        # print("Speed={},pressure ratio={},mass flow rate={}kg/s,efficiency={}".format(speed * sqrt(self.Tref), pik,
+        #                                                                               massflowrate * self.Pref / sqrt(
+        #                                                                                   self.Tref), efficiency))
+
+        return massflowrate, efficiency
+
+    # def pik(self,power,speed):
+
+    def effline(self,eff):
+        # 分三种情况，当eff大于最大效率和小于最小效率，直接跳过
+        # 只有一个交点，有两个交点
+        def listTodic(list1,list2):
+            result={}
+            for i in range(len(list1)):
+                result[list1[i]]=list2[i]
+            return result
+
+        def newto(fun,x0,h=0.01,tol=1.e-5):
+            result=x0
+            while abs(fun(result))>tol:
+                dfun=(fun(result+h)-fun(result-h))/2./h
+                result-=fun(result)/dfun
+            return result
+
+        from pandas import DataFrame,merge
+        from scipy.optimize import newton
+        newgroup = DataFrame(columns=self.map.columns, dtype=float)
+        for each in self.speeds:
+            if eff>max(self.group.get_group(each)[self.map.columns[3]]) or eff<min(self.group.get_group(each)[self.map.columns[3]]):
+                pass
+            elif eff<self.group.get_group(each).iloc[0,3]:
+                right=-1
+                while self.group.get_group(each).iloc[right,3]<eff:right-=1
+                y1=self.group.get_group(each).iloc[right+1,3]-eff
+                x1=self.group.get_group(each).iloc[right+1,1]
+                y2=self.group.get_group(each).iloc[right,3]-eff
+                x2=self.group.get_group(each).iloc[right,1]
+                mass=x1-y1*(x2-x1)/(y2-y1)
+
+                # mass=newton(lambda x:self.intefuns[each]["feff"](x)-eff,self.group.get_group(each)[self.map.columns[1]][-1])
+                pi=self.intefuns[each]["fmass"](mass)
+                newgroup.append(listTodic(self.map.columns,[each,mass,pi,eff]))
+            else:
+                # print(self.intefuns[each]["feff"]((self.group.get_group(each).iloc[-1,1]+max(self.group.get_group(each)[self.map.columns[1]]))/2.))
+                right = -1
+                while self.group.get_group(each).iloc[right, 3] < eff: right -= 1
+                y1 = self.group.get_group(each).iloc[right + 1, 3]-eff
+                x1 = self.group.get_group(each).iloc[right + 1, 1]
+                y2 = self.group.get_group(each).iloc[right, 3]-eff
+                x2 = self.group.get_group(each).iloc[right, 1]
+                # print(x1,y1,x2,y2)
+                mass1 = x1 - y1 * (x2 - x1) / (y2 - y1)
+                # print(mass1)
+                # print(self.intefuns[each]["fmass"].x)
+
+                left=0
+                while self.group.get_group(each).iloc[left, 3] < eff: left += 1
+                y1 = self.group.get_group(each).iloc[left - 1, 3]-eff
+                x1 = self.group.get_group(each).iloc[left - 1, 1]
+                y2 = self.group.get_group(each).iloc[left, 3]-eff
+                x2 = self.group.get_group(each).iloc[left, 1]
+                mass2 = x1 - y1 * (x2 - x1) / (y2 - y1)
+                # print(mass2)
+
+                # mass1 = newto(lambda x: self.intefuns[each]["feff"](x) - eff,
+                #               (max(self.group.get_group(each)[self.map.columns[1]])),h=0.001)
+                pi1 = float(self.intefuns[each]["fmass"](mass1))
+                # mass2 = newton(lambda x: self.intefuns[each]["feff"](x) - eff,
+                #                self.group.get_group(each)[self.map.columns[1]][0])
+                pi2 = float(self.intefuns[each]["fmass"](mass2))
+                # print(listTodic(self.map.columns, [each, mass1, pi1, eff]))
+                newgroup=newgroup.append(listTodic(self.map.columns, [each, mass1, pi1, eff]),ignore_index=True)
+                newgroup=newgroup.append(listTodic(self.map.columns, [each, mass2, pi2, eff]),ignore_index=True)
+
+        newgroup=newgroup.sort_values(by=[self.headers[0], self.headers[1]])
+        divideg=newgroup.groupby(self.headers[0])
+        header=[]
+        for each, ii in divideg:
+            header.append(each)
+        g1=DataFrame(columns=self.map.columns,dtype=float)
+        g2=DataFrame(columns=self.map.columns,dtype=float)
+        for jj in header:
+            if len(divideg.get_group(jj))==2:
+                g1=g1.append(divideg.get_group(jj).iloc[0,:])
+                g2=g2.append(divideg.get_group(jj).iloc[-1,:])
+            elif len(divideg.get_group(jj))<2:
+                g2 = g2.append(divideg.get_group(jj).iloc[-1, :])
+        g1.sort_values(by=self.headers[0])
+        g2=g2.sort_values(by=self.headers[0],ascending=False)
+        print(g1)
+        print(g2)
+        self.effmap=self.effmap.append(g1)
+        self.effmap = self.effmap.append(g2)
+        print(self.effmap)
+        # print(newgroup)
+
+    def power(self, speed, pik, Tin=300):
+        massflowrate, eff = self.massFlowrate(speed, pik)
+        from FluidProperties.GasProperty import cp_Justi, k_Justi
+        k = k_Justi(Tin)
+        power = massflowrate * cp_Justi(Tin) * Tin * (pow(pik, (k - 1) / k) - 1) / eff
+        print("power={} at speed={}, pressure ratio={}, mass flow rate={},efficiency={}".format(power, speed, pik,
+                                                                                                massflowrate, eff))
+        return power
+
+    def pressureRatio(self, speed, power, Tin=300):
+        if speed not in self.speeds:
+            self.addLine(speed)
+        temp = self.group.get_group(speed)[self.headers[2]]
+
+        print("maximum pressure ratio={},minimum pressure ratio={} at speed {}".format(max(temp), min(temp), speed))
+        print("\nCalculating the maximum and minimum power of the compressor")
+        self.power(speed, min(temp), Tin)
+        self.power(speed, max(temp), Tin)
+        print("Done!\n")
+
+        PRtemp = (max(temp) + min(temp)) / 2.
+
+        def fun(PR):
+            return self.power(speed, PR, Tin) - power
+
+        print("Calculating the pressure ratio")
+        h = 0.01
+        while abs(fun(PRtemp)) > 1.e-5:
+            PRtemp -= fun(PRtemp) / ((fun(PRtemp + h) - fun(PRtemp - h)) / 2 / h)
+            print(PRtemp)
+
+        return PRtemp
+
+    # 将插值好的Map写入到文件并打开
+    def writedata(self,filename="CompressorMapOut.xlsx",open=True):
+        self.map.to_excel(filename)
+        if open:
+            import os
+            os.system("start "+filename)
 
 
 class Turbine:
@@ -298,11 +521,24 @@ class Turbine:
 
 if __name__ == "__main__":
     C = Compressor("./CompressorMapMa.xlsx")
+
+    # C.plot()
+
+    # C.power(80000,2.2)
+    # C.power(80000, 2.3)
+    # C.power(80000, 2.4)
+    # C.power(80000, 2.5)
+    # C.power(80000, 2.6)
+    # C.power(80000, 2.7)
+    # print(C.pressureRatio(80000, 60000))
+    # C.massFlowrate(80000, 2.3)
+    C.interpolate(5)
+    C.effline(0.72)
+    # C.writedata()
     C.plot()
-    C.interpolate(3)
     # C.massFlowrate(60000,0)
-    C.plot(showlegend=True)
+    # C.plot(showlegend=True)
     hightlight = [C.massFlowrate(75000, 2.4), 2.4]
 
-    Turb = Turbine("./TurbineMap.xlsx")
+    Turb = Turbine("./TurbineMapMa.xlsx")
     Turb.plot(showlegend=True)

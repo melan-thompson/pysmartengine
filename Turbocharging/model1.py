@@ -4,8 +4,9 @@ sys.path.append("../")
 sys.path.append("../Valve/")
 sys.path.append("../Properties of working fluids/")
 from Cylinder import *
-from Compressor import *
-from GasProperty import Rg,k_Justi
+from Turbocharging.Compressor import *
+from FluidProperties.GasProperty import *
+from Cylinder.Cylinder import *
 
 if __name__=="__main__":
     import json
@@ -16,13 +17,14 @@ if __name__=="__main__":
     from pandas import read_excel
 
     data = read_excel(setting["文件"], index_col="机型").loc[setting["机型"]]
-    cyl = CylinderGeometry(setting["机型"])
+    cyl = CylinderGeometry(bore=setting["缸径"]*1.e-3,stroke=setting["冲程"]*1.e-3,compression_ratio=setting["压缩比"],connecting_rod_length=setting["连杆长度"]*1.e-3,number_of_cylinders=setting["气缸数"])
 
     # cyl.plotVolume()
     n=setting["发动机转速,rpm"]
 
     # 计算平均有效压力
     pme=BMEP(n,setting["发动机功率,kW"]*1.e3,cyl.totalDisplacedVolume())
+    print("平均有效压力{}".format(pme))
 
     #计算活塞平均速度
     cm=cyl.stroke*n/30
@@ -63,7 +65,7 @@ if __name__=="__main__":
     print("进气流量:{}".format(ma))
 
     #计算涡轮膨胀比
-    from Valve import flowUnitArea
+    from Valve.valve import flowUnitArea
 
     def fun(pt):
         Rge=Rg(setting["过量空气系数"])

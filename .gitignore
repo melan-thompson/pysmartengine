@@ -1,6 +1,5 @@
 # Default ignored files
 
-
 Data/
 Output/
 __pycache__/
@@ -8,5 +7,7 @@ __pycache__/
 *.db
 *.csv
 *.xlsx
+*.gif
 Trash/
+Sofwares/
 

@@ -1,4 +1,6 @@
-# sys.path.append("/")
+import sys
+
+sys.path.append("..")
 
 from FluidProperties.GasProperty import *
 
@@ -399,22 +401,24 @@ class HeatReleaseData:
 
 
 class CylinderPressure:
-    def __init__(self, _data):
+    def __init__(self, _data,CylGeo=None):
         self.data = _data
         self.data.setUnitToSI()
+        self.CylGeo=CylGeo
 
     def FFTTrasform(self, n, tau=4.):
         """
         傅里叶变换分析
-        :param n:
-        :param tau:
+        :param n:发动机转速，r/min
+        :param tau:发动机冲程
         :return:
         """
 
+        #计算采样频率
         def basicFrequency(n, CAInterval, stroke=4.):
             t_cycle = 30. * stroke / float(n)
-            t_interval = CAInterval * t_cycle / 720.
-            return 1 / t_interval
+            t_interval = CAInterval * t_cycle / 720. #采一次样的时间间隔
+            return 1 / t_interval #采样频率
 
         CAInterval = self.data.table[0].data[1] - self.data.table[0].data[0]
         baseF = basicFrequency(n, CAInterval, tau)
@@ -422,13 +426,15 @@ class CylinderPressure:
         print("Basic frequency is {} kHz".format(baseF / 1.e3))
         from numpy import fft
         import numpy as np
+
         dofft = fft.fft(self.data.table[1].data)
         from ArrayTable import ArrayTable
         result = ArrayTable(3, 0)
         result.setTableHeader(["Frequency", "Amplitude", "Phase"])
         result.setTableUnit(["Hz", "/", ""])
-        for i in range(self.data.row):
-            result.append([i * baseF, np.abs(dofft[i]), np.angle(dofft[i])])
+        result.append([0 * baseF, np.abs(dofft[0]) / self.data.row, np.angle(dofft[0])])
+        for i in range(1,self.data.row//2):
+            result.append([i * baseF, np.abs(dofft[i])/self.data.row*2, np.angle(dofft[i])])
         return result
 
     def FFTFilter(self, _cutOffFrequency, amplitudeMutiplier=1):
@@ -447,6 +453,28 @@ class CylinderPressure:
         result.table[2].data = self.data.table[1].data
         return result
 
+    def CentralMoment(self,start,end,order=0):
+        table=self.data.slice(start,end)
+        if order==0:
+            return table.integrate()
+        if order==1:
+            from ArrayTable import PhsicalVarList
+            temp=PhsicalVarList()
+            for i in range(table.row):
+                temp.append(table.table[0].data[i]*table.table[1].data[i])
+            table.appendColumn(temp)
+            return table.integrate(2,0)
+        if order>1:
+            thetac=self.CentralMoment(start,end,1)
+            from ArrayTable import PhsicalVarList
+            temp = PhsicalVarList()
+            for i in range(table.row):
+                temp.append(pow(table.table[0].data[i]-thetac,order) * table.table[1].data[i])
+            table.appendColumn(temp)
+            return table.integrate(2, 0)
+
+
+
     def netHeatReleaseRate(self, CylGeo, ivc=None, TBeforeValeve=50 + 173.15, plot=False):
         def gamma(T):
             return 1.338 - 6.0e-5 * T + 1.0e-8 * T * T
@@ -454,7 +482,7 @@ class CylinderPressure:
         if ivc is None:
             ivc = -180 + 50  # 进气门迟后角为30~70
 
-        from GasProperty import Rg
+        # from GasProperty import Rg
         mc = self.data.linearInterpolate(ivc, 1) * CylGeo.V(ivc) / Rg() / chargeTemperature(TBeforeValeve)
 
         result = self.data.selectColumns([0, 1])
@@ -566,7 +594,7 @@ class CylinderPressure:
 
     def Temperature(self, CylGeo):
         from ArrayTable import ArrayTable
-        from GasProperty import Rg
+        # from GasProperty import Rg
         result = ArrayTable(4, 0)
         for i in range(self.data.row):
             V = CylGeo.V(self.data.table[0].data[i])
@@ -581,6 +609,8 @@ class CylinderPressure:
         self.slice(-60, 60)
         self.data.diff(1)
         self.data.diff(2)
+
+        # 一阶导数的过零点
         if type == 0:
             zeroindex = self.data.findMaxValueIndex(1)
             while self.data.table[0].data[zeroindex] > 0:
@@ -609,6 +639,7 @@ class CylinderPressure:
             plt.show()
             return soc
 
+        # 二阶导数的极大值点
         if type == 1:
             index = self.data.findMaximumDataIndex(3, 2)
             trueindex = [i for i in index if self.data.table[0].data[i] < 0]
@@ -642,6 +673,7 @@ class CylinderPressure:
             plt.show()
             return trueindex[-2], trueindex[-1]
 
+        # 三阶导数的极大值点
         if type == 2:
             self.data.diff(3)
             index = self.data.findMaximumDataIndex(4, 2)
@@ -1145,15 +1177,35 @@ def x(theta, start=0, end=60):
     return 0.5 * (1 - cos(pi * (theta - start) / (end - start)))
 
 
-def FMEP(D, cm, pme) -> float:
+def FMEP(D: float, cm: float, pme: float, stroke=4) -> float:
     """
     计算平均机械损失压力，适用于四冲程
     :param D:Bore，气缸直径(m)
     :param cm:Mean piston moving velocity，活塞平均运动速度(m/s)
     :param pme:Brake mean effective pressure，平均有效压力(Pa)
     :rtype: FMEP，平均机械损失压力(Pa)
+    :param stroke:冲程数
     """
-    return pow(D, -0.1778) * (0.00855 * cm + 0.0789 * pme / 1.e6 - 0.0214) * 1.e6
+    if stroke == 4:
+        # return pow(D, -0.1778) * (0.00855 * cm + 0.0789 * pme / 1.e6 - 0.0214) * 1.e6
+        return pow(D, -0.1778) * (0.0855 * cm + 0.0789 * pme / 98066.5 - 0.214) * 98066.5
+    elif stroke == 2:
+        return pow(D, -0.1988) * (0.0829 * cm + 0.08295 * (pme / 98066.5) - 0.3) * 98066.5
+    else:
+        raise Exception("Stroke number error, either 2 or 4 is allowed")
+
+
+def FMEP2(cm: float, pme: float) -> float:
+    return (0.4 + 0.004 * pme / 1.e5 + 0.09 * cm + 0.0009 * pow(cm, 2))*1.e5
+
+
+def maximumPressure(pme:float):
+    """
+    由平均有效压力估计最大爆发压力
+    :param pme: 平均有效压力，Pa
+    :return: 最大爆发压力，Pa
+    """
+    return (27.65502 + 6.01295 * pme / 1.e5) * 1.e5
 
 
 def MeEff(D, cm, pme) -> float:
@@ -1165,6 +1217,7 @@ def MeEff(D, cm, pme) -> float:
     :rtype: Mechanical efficiency,机械效率=BMEP/(BMEP+FMEP)(Pa)
     """
     fmep = FMEP(D, cm, pme)
+    print("FMEP={}bar".format(fmep / 1.e5))
     return pme / (pme + fmep)
 
 
@@ -1243,7 +1296,7 @@ def pimFuel(mfcycle, Vs, phia=1.1, phic=0.85, Tim=300, L0=14.3):
     :param L0:
     :return:
     """
-    from GasProperty import Rg
+    # from GasProperty import Rg
     return mfcycle * L0 * phia / phic * Rg(phia) * Tim / Vs
 
 
@@ -1257,7 +1310,7 @@ def massAir(Vd, ps=1.e5, Ts=300, VE=1.0, phis=1.0):
     :param phis: 扫气系数
     :return: 进气量(kg)
     """
-    from GasProperty import Rg
+    # from GasProperty import Rg
     return VE * ps * Vd / Rg() / Ts
 
 
@@ -1281,6 +1334,7 @@ def thermalUsageIndex(gi, alpha, Cm, D, S, n, Ps, Ts, strokeNum=4):
     """
     R = pow(alpha * gi / 1e3, 0.5) * pow(Ts, 1.5) * pow(Cm, 0.78) * (0.5 + D / (2 * S)) / (
             (D * n) * pow(D * Ps / 1.e6, 0.22))
+    print("R={}".format(R))
     if strokeNum == 4:
         return 1.028 - 0.00096 * R
     elif strokeNum == 2:
@@ -1315,17 +1369,17 @@ def exhaustTemperature(ge=213, etam=0.86, alpha=1.2, phis=1, Ts=300, thermalUsag
     # \left( {\alpha {\varphi _s} - 1 + {\beta _0}} \right){L_0}{\left( {\mu {c_p}} \right)_T}{T_T}
     """
     排气温度预测公式
-    :param ge:
-    :param etam:
-    :param alpha:
-    :param phis:
-    :param Ts:
+    :param ge:燃油消耗率
+    :param etam:机械效率
+    :param alpha:过量空气系数
+    :param phis:扫气系数
+    :param Ts:进气温度(K)
     :param thermalUsage:
     :param l0:
     :param Hu:
     :return:
     """
-    from GasProperty import mucps, mucpT
+    # from GasProperty import mucps, mucpT
     beta = 1.034
     Tt = 500
     cps = mucps(Ts)
@@ -1337,6 +1391,42 @@ def exhaustTemperature(ge=213, etam=0.86, alpha=1.2, phis=1, Ts=300, thermalUsag
     h = 0.1
     while abs(fun(Tt)) > 1.e-5:
         Tt -= fun(Tt) / ((fun(Tt + h) - fun(Tt - h)) / 2 / h)
+
+    return Tt
+
+
+def exhaustTemperature2(bore, stroke, pme, n, ge, ps, Ts, alpha=1, etav=1, strokeNum=4, l0=0.495, Hu=42496):
+    # {\xi _T}Hu - \frac{{3600}}{{{g_e}{\eta _m}}} + \alpha {\varphi _s}{L_0}{\left( {\mu {c_p}} \right)_s}{T_s} = \left( {\alpha {\varphi _s} - 1 + {\beta _0}} \right){L_0}{\left( {\mu {c_p}} \right)_T}{T_T}
+    """
+    计算排气温度的JDK算法,首先计算机械效率,再计算涡轮前热利用系数，最后迭代求解
+    :param bore: 缸径,m
+    :param stroke: 冲程,m
+    :param pme:平均有效压力,Pa
+    :param n: 转速,r/min
+    :param ge: 有效燃油消耗率,g/(kW*h)
+    :param ps: 进气管压力,Pa
+    :param Ts: 进气管温度,K
+    :param alpha: 过量空气系数
+    :param etav: 扫气系数
+    :param strokeNum: 冲程数，默认为4
+    :param l0: 燃烧1kg柴油所需的空气量，默认为0.495kmol/kg
+    :param Hu: 燃料低热值，kJ/kg
+    :return: 排气温度,K
+    """
+    cm = stroke * n / 30
+    print("活塞平均速度{}m/s".format(cm))
+
+    # 计算机械效率
+    etam = MeEff(bore, cm, pme)
+    print("机械效率{}".format(etam))
+
+    # 计算涡轮前热利用系数
+    R = thermalUsageIndex(ge * etam, alpha, cm, bore, stroke, n, ps, Ts, strokeNum)
+    print("涡轮前热利用系数{}".format(R))
+
+    # 计算涡前温度
+    Tt = exhaustTemperature(ge, etam, alpha, etav, Ts, R, l0, Hu)
+    print("涡前温度{}℃".format(Tt - 273.15))
 
     return Tt
 
@@ -1676,7 +1766,6 @@ if __name__ == "__main__":
     import json
 
     CylinderGeometry("WP7").plotVolume()
-
 
     from Valve.valve import ValveSimple
 

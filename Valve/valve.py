@@ -1,6 +1,9 @@
 from ArrayTable import ArrayTable
 import math
 
+from FluidProperties.GasProperty import *
+
+
 def flowUnitArea(p1, T1, R1, k1, p2, T2=0, R2=0, k2=0):
     if p1 < 0 or p2 < 0:
         raise Exception("Pressure can not less than 0!!!")
@@ -12,7 +15,7 @@ def flowUnitArea(p1, T1, R1, k1, p2, T2=0, R2=0, k2=0):
         raise Exception("Inappropriate specific heat ratio!!!")
     from math import sqrt, pow
     TMP2 = p2 / p1
-    if abs(TMP2 - 1) < 1.e-2:
+    if abs(TMP2 - 1) < 1.e-5:
         return 0
     elif TMP2 < 1.0:  ##正向流动
         TMP1 = sqrt(2 * k1 / R1 / T1)
@@ -74,23 +77,56 @@ class ValveSimple:
     def record(self, t):
         self.data.append([t, self.next.p / self.last.p, self.dm_record])
 
-    def airFlowExample(self, p1, T1, p2=None, T2=None, K2=None):
-        from GasProperty import Rg, k_Justi
-        R1 = Rg(T1)
-        R2 = Rg(T2)
+    def airFlowExample(self, p1, T1, p2=None, T2=None,plot=True):
+        # from GasProperty import Rg, k_Justi
+        R1 = Rg()
+        R2 = Rg()
         k1 = k_Justi(T1)
-        k2 = k_Justi(T2)
         step = 1.e-3 * p1
         import numpy as np
-        for i in np.arange(0, p1, step):
-            self.data.append([i / p1, self.__massFlowRate(p1, T1, R1, k1, i)])
+        table=ArrayTable(2,0)
+        for i in np.arange(0, p1+step, step):
+            table.append([i / p1, self.__massFlowRate(p1, T1, R1, k1, i)])
 
         if p2 is not None and T2 is not None:
-            step2 = 0.01 * p2
-            for i in np.arange(0.5 * p2, p2, step):
-                self.data.append([p2 / i, self.__massFlowRate(i, T1, R1, k1, p2, T2, R2, K2)])
+            k2 = k_Justi(T2)
+            step2 = 0.001 * p2
+            for i in np.arange(0.4 * p2, p2, step2):
+                table.append([p2 / i, self.__massFlowRate(i, T1, R1, k1, p2, T2, R2, k2)])
 
-        return self.data
+        table.doQuickSort()
+        if plot is True:
+            import matplotlib.pyplot as plt
+            plt.plot(table.table[0].data,table.table[1].data)
+            choke1=pow(2/(k1+1),k1/(k1-1))
+            print(choke1)
+            massflow1=self.__massFlowRate(p1, T1, R1, k1, p1*choke1)
+            plt.scatter(choke1,massflow1)
+
+            choke2 = pow(2 / (k2 + 1), k2 / (k2 - 1))
+            print(1/choke2)
+            massflow2=self.__massFlowRate(p1*choke2, T1, R1, k1, p2,T2, R2, k2)
+            plt.scatter(1/choke2, massflow2)
+
+            plt.axvline(x=1, color='r', linestyle=":")
+            plt.axhline(y=0, color='r', linestyle=":")
+
+            plt.annotate('%.5f' % choke1,
+                        xy=(choke1,massflow1), xycoords='data',
+                        xytext=(-80, -30), textcoords='offset points',
+                        arrowprops=dict(arrowstyle="->"))
+
+            plt.annotate('%.5f' % (1/choke2),
+                         xy=(1/choke2, massflow2), xycoords='data',
+                         xytext=(40, 30), textcoords='offset points',
+                         arrowprops=dict(arrowstyle="->"))
+            plt.xlabel("Pressure ratio(/)")
+            plt.ylabel("Mass flow rate(kg/s)")
+
+            plt.tight_layout()
+            plt.show()
+
+        return table
 
 
 class Valve:
@@ -123,27 +159,27 @@ class Valve:
             self.flow_coeff.setTableUnit(["m", "/"])
             maxlift = self.valve_lift.findMaxValue(1)
             print("maximum valve lift is {}".format(maxlift))
-            if valveDiameter<maxlift/0.544:
-                raise Exception("valve diameter is too small, it can not be less than {}".format(maxlift/0.544))
+            if valveDiameter < maxlift / 0.544:
+                raise Exception("valve diameter is too small, it can not be less than {}".format(maxlift / 0.544))
             import numpy as np
-            for i in np.arange(0, maxlift, maxlift/100):
-                flowcoeff=self.__flowcoefficient(i)
+            for i in np.arange(0, maxlift, maxlift / 100):
+                flowcoeff = self.__flowcoefficient(i)
                 if flowcoeff < 0:
                     raise Exception("valve flow coefficient can not less than 0")
                 self.flow_coeff.append([i, flowcoeff])
 
         # 有效流通面积
-        self.flowAreaData=ArrayTable(2,0)
+        self.flowAreaData = ArrayTable(2, 0)
         self.flowAreaData.setTableHeader(["Valve lift", "Flow area"])
         self.flowAreaData.setTableUnit(["$^\circ$CA", "$m^2$"])
-        for i in np.arange(-540,540):
-            self.flowAreaData.append([i,self.flowArea(i)])
+        for i in np.arange(-540, 540):
+            self.flowAreaData.append([i, self.flowArea(i)])
 
         # 下游上游
         self.last = None
         self.next = None
 
-        self.dm_record=0
+        self.dm_record = 0
 
     # valvelift从0开始
     def valveLiftStartFromZero(self):
@@ -159,29 +195,29 @@ class Valve:
     # 计算流通面积
     def flowArea(self, Fi):
         from math import pi, cos, sin
-        hv = self.valve_lift.linearInterpolate(Fi, 1,1)
+        hv = self.valve_lift.linearInterpolate(Fi, 1, 1)
         flowcoeff = self.__flowcoefficient(hv)
-        if flowcoeff<0:
+        if flowcoeff < 0:
             raise Exception("valve flow coefficient can not less than 0")
         return flowcoeff * pi * hv * cos(self.sigma) * (self.valve_diameter + hv * sin(self.sigma) * cos(self.sigma))
 
     # 计算流量kg/s
-    def massFlowRate(self, Fi,speed=None):
+    def massFlowRate(self, Fi, speed=None):
         # 流量单位为kg/s
         if speed is None:
             self.dm_record = flowUnitArea(self.last.p, self.last.T, self.last.Rg, self.last.k, self.next.p,
-                                          self.next.T, self.next.Rg, self.next.k)*self.flowArea(Fi)
+                                          self.next.T, self.next.Rg, self.next.k) * self.flowArea(Fi)
         else:
             self.dm_record = flowUnitArea(self.last.p, self.last.T, self.last.Rg, self.last.k, self.next.p,
-                                          self.next.T, self.next.Rg, self.next.k) * self.flowArea(Fi)/6/speed
+                                          self.next.T, self.next.Rg, self.next.k) * self.flowArea(Fi) / 6 / speed
         return self.dm_record
 
-    def connect_to(self,last_component,next_component):
-        self.last=last_component
-        last_component.next=self
+    def connect_to(self, last_component, next_component):
+        self.last = last_component
+        last_component.next = self
 
-        self.next=next_component
-        next_component.last=self
+        self.next = next_component
+        next_component.last = self
 
     def plotValveLift(self, anotherValve=None):
         import matplotlib.pyplot as plt
@@ -343,6 +379,9 @@ class ValveDesign:
 if __name__ == "__main__":
     # temp = ValveDesign()
     # temp.plot()
+
+    v=ValveSimple()
+    v.airFlowExample(1.e5,300,1.5e5,400,plot=True)
 
     valvelift = ArrayTable()
     valvelift.readCSVFile("IntakeValveLift.csv")
