@@ -24,7 +24,7 @@
 
 # 附录 常用的内燃机性能仿真软件介绍
 
-[意大利OpenWAM](http://openwam.webs.upv.es/docs/) OpenWAM是一个开源的发动机仿真软件.
+[意大利OpenWAM](http://openwam.webs.upv.es/docs/) OpenWAM是一个开源的发动机仿真软件，[openWAM源代码](https://github.com/CMT-UPV/OpenWAM.git)
 
 [俄罗斯DIESEL-RK](https://diesel-rk.bmstu.ru/Eng/index.php) DIESEL-RK is a full cycle thermodynamic engine simulation software. One is designed for simulating and optimizing working processes of **two**- and **four-stroke** internal combustion engines with all types of boosting.
 

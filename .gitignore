@@ -9,5 +9,10 @@ __pycache__/
 *.xlsx
 *.gif
 Trash/
-Sofwares/
+Softwares/
+Notes/
+main.py
+*.bat
+.vscode/
+
 

@@ -1,3 +1,31 @@
+from ctypes import *
+
+pDLL = CDLL("./FluidProperties.dll")
+
+
+def runtime(fun):
+    from time import time
+    def wrapper(*args, **argv):
+        start = time()
+        fun(*args, **argv)
+        end = time()
+        print("running time {}s".format(end - start))
+
+
+# @runtime
+def u_Justi2(T, AFAK=1.e8, Tref=273.15):
+    try:
+        # pDLL = CDLL("./FluidProperties.dll")
+        fun = pDLL.u_Justi
+    except Exception as e:
+        print("DLL load fail", e)
+    fun.argtypes = [c_double, c_double, c_double]
+    fun.restype = c_double
+    print(fun(c_double(T), c_double(AFAK), c_double(Tref).value),"yes")
+    time.sleep(1)
+
+
+# @runtime
 def u_Justi(T, AFAK=1.e8, Tref=273.15) -> float:
     """
     Justi公式
@@ -6,14 +34,15 @@ def u_Justi(T, AFAK=1.e8, Tref=273.15) -> float:
     :param Tref: Reference temperature，参考温度(K)
     :return:比热力学能(J/kg)
     """
-    if AFAK<1:
+    if AFAK < 1:
         raise Exception("Generalized excess air fuel ratio can not less than 1")
-    if T<0:
+    if T < 0:
         raise Exception("Temperature can not less than 0")
     temp1 = 489.6 + 46.4 / pow(AFAK, 0.93)
     temp2 = 7.768 + 3.36 / pow(AFAK, 0.8)
     temp3 = 0.0975 + 0.0485 / pow(AFAK, 0.75)
     temp4 = 1356.8 + temp1 * (T - Tref) * 1.e-2 + temp2 * pow(T - Tref, 2) * 1.e-4 - temp3 * pow(T - Tref, 3) * 1.e-6
+    time.sleep(1)
     return 0.1445 * temp4 * 1.e3  # J / kg
 
 
@@ -281,4 +310,21 @@ def cp_R(species="H2O", T=3000):
 
 
 if __name__ == "__main__":
-    print(cp_R())
+    import time
+    start=time.time()
+    print(u_Justi(300,100,273))
+    end=time.time()
+    print("run time {}".format((end-start)*1.e3))
+
+    start = time.time()
+    u_Justi2(300,100,273)
+    end = time.time()
+    print("run time {}".format((end - start) * 1.e3))
+    # print()
+
+    import pybind2
+    start = time.time()
+    pybind2.u_Justi(300, 100, 273)
+    time.sleep(1)
+    end = time.time()
+    print("run time {}".format((end - start) * 1.e3))
