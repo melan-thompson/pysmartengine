@@ -1,0 +1,26 @@
+# Default ignored files
+
+Data/
+Output/
+__pycache__/
+.idea/
+#*.db
+*.csv
+#*.xlsx
+*.gif
+Trash/
+Softwares/
+*test*
+Notes/
+main.py
+*.bat
+.vscode/
+
+.ipynb
+
+*temp*
+.vs/
+build/
+Mean value engine models/
+
+

@@ -1,0 +1,29 @@
+Metadata-Version: 2.1
+Name: pysmartengine
+Version: 0.0.3
+Summary: a python library for internal combustion engine
+Home-page: https://github.com/melan-thompson/pysmartengine
+Author: WenpingXie
+Author-email: 1303061669@qq.com
+Maintainer: WenpingXie
+License: UNKNOWN
+Platform: UNKNOWN
+Classifier: Programming Language :: Python :: 3
+Classifier: License :: OSI Approved :: MIT License
+Classifier: Operating System :: OS Independent
+Classifier: Programming Language :: Python
+Classifier: Programming Language :: Python :: 3
+Classifier: Programming Language :: Python :: 3.7
+Classifier: Programming Language :: Python :: 3.8
+Classifier: Programming Language :: Python :: 3.9
+Classifier: Programming Language :: Python :: 3.10
+Description-Content-Type: text/markdown
+License-File: LICENSE
+
+# pysmartengine-A simple python package for internal combustion engine simulation
+
+
+
+ 
+
+
